@@ -2,8 +2,8 @@
 %nonassoc  ELSE
 
 %left '<' '>' '=' LE_GE_OP EQ_NE_OP LG_OP ASSIGNMENT_OP
-%left  '+'  '-'
-%left  '*'  '/' '%'
+%left  '+' '-'
+%left  '*' '/' '%'
 %left  '|'
 %left  '&'
 
@@ -12,7 +12,7 @@
 %token AND_OP OR_OP OP_ASSIGN
 %token TYPE_NAME DEF
 
-%token ADD_OP MULTIPLICATIVE_OP COMPARISON_OP ASSIGNMENT_OP LOGICAL_OP
+%token ADD_OP MULTIPLICATIVE_OP COMPARISON_OP LOGICAL_OP
 
 %token CHAR SHORT INT LONG SIGNED UNSIGNED TYPE_QUALIFIER VOID
 
@@ -33,7 +33,7 @@ primary_expression
 	| Define primary_expression
 	;
 
-Define
+Define							//Macros
 	: DEF ;
 
 postfix_expression
@@ -107,7 +107,7 @@ exclusive_or_expression
 	| exclusive_or_expression '^' and_expression
 	;
 
-inclusive_or_expression
+inclusive_or_expression																		//Bitwise OR?
 	: exclusive_or_expression
 	| inclusive_or_expression '|' exclusive_or_expression
 	;
@@ -153,9 +153,9 @@ declaration
 
 declaration_specifiers
 	: type_specifier
-	| type_specifier declaration_specifiers
-	| type_qualifier
-	| type_qualifier declaration_specifiers
+	//| type_specifier declaration_specifiers					//removed because there is a need to check for declarations like 'int int', 'unsigned unsigned', 'usigned signed signed signed ... int' etc which the grammar presently accepts as valid
+	//| type_qualifier																	//Is this required if the next one is removed?
+	//| type_qualifier declaration_specifiers						//Need to remove this too?
 	;
 
 init_declarator_list
@@ -171,12 +171,12 @@ init_declarator
 type_specifier
 	: VOID
 	| CHAR
-	| SHORT
+	//| SHORT
 	| INT
-	| LONG
-	| SIGNED
-	| UNSIGNED
-	| TYPE_NAME
+	//| LONG
+	//| SIGNED
+	//| UNSIGNED				//Are we supporting all these?
+	//| TYPE_NAME
 	;
 
 
@@ -336,21 +336,6 @@ function_definition
 #include"lex.yy.c"
 #include<ctype.h>
 #include <stdio.h>
-int main(int argc, char *argv[])
-{
-	yyin = fopen(argv[1], "r");
-
-  if(!yyparse())
-		printf("\nParsing complete\n");
-	else
-		printf("\nParsing failed\n");
-	fclose(yyin);
-	printf("Symbol table - %p\n", ht);
-	display_symbol_table();
-	return 0;
-}
-
-extern char *yytext;
 
 void display_symbol_table(){
 	printf("---------------------------------\n");
@@ -367,3 +352,19 @@ void display_symbol_table(){
 yyerror(char *s) {
 	printf("\nLine %d : %s\n", (yylineno), s);
 }
+
+int main(int argc, char *argv[])
+{
+	yyin = fopen(argv[1], "r");
+
+  if(!yyparse())
+		printf("\nParsing complete\n");
+	else
+		printf("\nParsing failed\n");
+	fclose(yyin);
+	printf("Symbol table - %p\n", ht);
+	display_symbol_table();
+	return 0;
+}
+
+extern char *yytext;
