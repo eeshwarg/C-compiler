@@ -158,7 +158,11 @@ init_declarator_list: init_declarator
 										;
 
 init_declarator	: declarator
-								| declarator '=' initializer
+								| declarator '=' initializer {value_s* v = st.find_id( $<str>1 );
+																								if (v->type != $<type>3)
+																									yyerror("Type mismatch!");
+																								else
+																									$<type>$ = $<type>3;}
 								;
 
 datatype: VOID 	{dtype = Void;}
@@ -192,7 +196,7 @@ identifier_list	: IDENTIFIER
 								| identifier_list ',' IDENTIFIER
 								;
 
-initializer	: assignment_expression
+initializer	: assignment_expression	{$<type>$ = $<type>1;}
 						| '{' initializer_list '}'
 						| '{' initializer_list ',' '}'
 						;
@@ -208,11 +212,15 @@ statement	: compound_statement
 					| jump_statement
 					;
 
-compound_statement: '{' '}'
-									| '{' statement_list '}'
-									| '{' declaration_list '}'
-									| '{' declaration_list statement_list '}'
+compound_statement: start_scope '{' '}' { st.display(); st.close_scope(); }
+									| start_scope '{' statement_list '}'	{st.display();  st.close_scope(); }
+									| start_scope '{' declaration_list '}' 	{ st.display(); st.close_scope(); }
+									| start_scope '{' declaration_list statement_list '}' { st.display(); st.close_scope(); }
 									;
+
+start_scope	:		{ st.new_scope(); }
+						;
+
 
 declaration_list: declaration
 								| declaration_list declaration
