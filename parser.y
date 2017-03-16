@@ -1,3 +1,9 @@
+%{
+	int yylex(void);
+	void yyerror(char *);
+%}
+
+
 %nonassoc NO_ELSE
 %nonassoc  ELSE
 
@@ -240,7 +246,7 @@ void display_symbol_table(){
   }
 }
 
-yyerror(char *s) {
+void yyerror(char *s) {
 	printf("\nLine %d : %s\n", (yylineno), s);
 }
 

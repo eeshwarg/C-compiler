@@ -41,7 +41,7 @@ MACRO 			          #define({WHITESPACE}){IDENTIFIER}(.)+
 SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
 %{
-int yylineno;
+// int yylineno;
 #include <stdio.h>
 #include "y.tab.h"
 
@@ -116,7 +116,7 @@ void display();
 
 %%
 
-yywrap(){
+int yywrap(){
 	return(1);
 }
 
