@@ -45,11 +45,15 @@ class sym_table{
 
       void save_id(char* key, value_s* value){
         printf("Received %s. Current status - \n", key);
-        display();
-        hashtable_t* ht = s.back();
+        //display();
+        //printf("%d", s.size());
+        hashtable_t* ht = s[s.size()-1];
+        //printf("Hashtable : %p\n", ht);
+        printf("%d %d\n",(int)value->token, (int)value->type);
         if( ht_get(ht, key) == NULL){
-          ht_set(ht, key, value);
+           ht_set(ht, key, value);
         }
+        printf("Stored!\n");
       }
 
       void display(){

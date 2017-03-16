@@ -20,6 +20,17 @@ typedef struct value_s {
 	char* other;
 }value_s;
 
+value_s* make_value(token_e token, type_e type, char* other){
+	value_s* n = (value_s*)malloc((sizeof(value_s)));
+	n->token = token;
+	n->type = type;
+	if(other != NULL)
+		n->other = strdup(other);
+	else
+		n->other = NULL;
+	return n;
+}
+
 struct entry_s {
 	char *key;
 	value_s *value;
@@ -87,6 +98,7 @@ entry_t *ht_newpair( char *key, value_s *value ) {
 	}
 
 	if( (newpair->value = (value_s*)malloc( sizeof( value_s ) ) ) == NULL){
+		printf("Sucks");
 		return NULL;
 	}
 
@@ -94,9 +106,14 @@ entry_t *ht_newpair( char *key, value_s *value ) {
 		return NULL;
 	}
 
-	if( ( newpair->value->other = strdup( value->other ) ) == NULL ) {
-		return NULL;
+	if(value->other != NULL){
+		if( ( newpair->value->other = strdup( value->other ) ) == NULL ) {
+			return NULL;
+		}
+	} else {
+		newpair->value->other = NULL;
 	}
+
 	newpair->value->type = value->type;
 	newpair->value->token = value->token;
 	newpair->next = NULL;
@@ -119,20 +136,20 @@ void ht_set( hashtable_t *hashtable, char *key, value_s *value ) {
 		last = next;
 		next = next->next;
 	}
-
 	/* There's already a pair.  Let's replace that string. */
 	if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
 
 		free( next->value );
 		next->value = (value_s*)malloc( sizeof( value_s ) );
-		next->value->other = strdup(value->other);
+		if(value->other != NULL)
+			next->value->other = strdup(value->other);
+		else
+			next->value->other = NULL;
 		next->value->token = value->token;
 		next->value->type = value->type;
-
 	/* Nope, could't find it.  Time to grow a pair. */
 	} else {
 		newpair = ht_newpair( key, value );
-
 		/* We're at the start of the linked list in this bin. */
 		if( next == hashtable->table[ bin ] ) {
 			newpair->next = next;
@@ -152,6 +169,7 @@ void ht_set( hashtable_t *hashtable, char *key, value_s *value ) {
 
 /* Retrieve a key-value pair from a hash table. */
 value_s* ht_get( hashtable_t *hashtable, char *key ) {
+	printf("ht_get\n");
 	int bin = 0;
 	entry_t *pair;
 
