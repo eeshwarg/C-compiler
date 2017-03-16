@@ -53,8 +53,8 @@ void display();
 {NEWLINE}   		              { yylineno++;display();}
 {MULTI_LINE_COMMENT}					{ count_comment(yytext); }
 {SINGLE_LINE_COMMENT}					{ /*do nothing*/ }
-{LIBRARY} 		                { display();}
-{MACRO} 			                { display(); tabulate_token(yytext,"Constant"); return DEF;}
+{LIBRARY} 		                { display(); }
+{MACRO} 			                { display(); tabulate_token(yytext,"Constant"); }
 {NUMERIC_CONST}			          { display(); tabulate_token(yytext,"Constant"); return CONSTANT; }
 
 {STRING}			                { display(); tabulate_token(yytext,"Constant"); return STRING_LITERAL; }
@@ -63,22 +63,36 @@ void display();
 {SYMBOL}                      { display(); return(yytext[0]);}
 =			                        { display(); return '='; }
 
-"++"|"--"	                    { display(); return INC_DEC_OP; }
-"<<"|">>"	                    { display(); return SHIFT_OP; }
-"<="|">="	                    { display(); return LE_GE_OP; }
-"=="|"!="	                    { display(); return EQ_NE_OP; }
+"--"	                        { display(); return DEC_OP; }
+"++"                          { display(); return INC_OP; }
+"<<"    	                    { display(); return LEFT_OP; }
+">>"                          { display(); return RIGHT_OP; }
+"<="    	                    { display(); return LE_OP; }
+">="    	                    { display(); return GE_OP; }
+"=="                          { display(); return EQ_OP; }
+"!="	                        { display(); return NE_OP; }
 
 "&&"			                    { display(); return AND_OP; }
 "||"			                    { display(); return OR_OP; }
 
-"*="|"/="|"%="|"+="|"-="|"<<="|">>="|"&="|"^="|"|="	{ display(); return OP_ASSIGN; }
+"*="                          { display(); return MUL_ASSIGN; }
+"/="                          { display(); return DIV_ASSIGN; }
+"%="                          { display(); return MOD_ASSIGN; }
+"+="                          { display(); return ADD_ASSIGN; }
+"-="                          { display(); return SUB_ASSIGN; }
+"<<="                         { display(); return LEFT_ASSIGN; }
+">>="                         { display(); return RIGHT_ASSIGN; }
+"&="                          { display(); return AND_ASSIGN; }
+"^="                          { display(); return XOR_ASSIGN; }
+"|="                        	{ display(); return OR_ASSIGN; }
 
 
 "char"			                  { display(); tabulate_token(yytext,"Keyword"); return CHAR; }
 "int"			                    { display(); tabulate_token(yytext,"Keyword"); return INT; }
 "signed"		                  { display(); tabulate_token(yytext,"Keyword"); return SIGNED; }
 "unsigned"		                { display(); tabulate_token(yytext,"Keyword"); return UNSIGNED; }
-"const"|"volatile"			      { display(); tabulate_token(yytext,"Keyword"); return TYPE_QUALIFIER; }
+"const"                       { display(); tabulate_token(yytext,"Keyword"); return CONST; }
+"volatile"        			      { display(); tabulate_token(yytext,"Keyword"); return VOLATILE; }
 "void"			                  { display(); tabulate_token(yytext,"Keyword"); return VOID; }
 
 "if"				                  { display(); tabulate_token(yytext,"Keyword"); return IF; }
@@ -99,16 +113,11 @@ void display();
 
 "."			                      { display(); return('.'); }
 
-{UNARY_OP}			              { display(); tabulate_token(yytext,"Operator"); return UNARY_OP; }
 {ARITHMETIC_OP}               { display(); tabulate_token(yytext,"Operator"); return(yytext[0]);}
 
-"<"|">"			                  { display(); return LG_OP; }
-"^"			                      { display(); return('^'); }
-"|"			                      { display(); return('|'); }
-"?"			                      { display(); return('?'); }
 {IDENTIFIER}    		          { display(); tabulate_token(yytext,"Identifier"); return IDENTIFIER; }
 [ \t\v\n\f]		                { display(); }
-.			                        { /* ignore bad characters */ }
+.			                        { return yytext[0]; }
 
 %%
 

@@ -1,40 +1,27 @@
 %nonassoc NO_ELSE
 %nonassoc  ELSE
 
-%left '<' '>' '=' LE_GE_OP EQ_NE_OP LG_OP ASSIGNMENT_OP
-%left  '+' '-'
-%left  '*' '/' '%'
-%left  '|'
-%left  '&'
-
 %token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
-%token PTR_OP INC_DEC_OP SHIFT_OP UNARY_OP
-%token AND_OP OR_OP OP_ASSIGN
-%token TYPE_NAME DEF
+%token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
+%token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
+%token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
+%token XOR_ASSIGN OR_ASSIGN TYPE_NAME
 
-%token ADD_OP MULTIPLICATIVE_OP COMPARISON_OP LOGICAL_OP
-
-%token CHAR SHORT INT LONG SIGNED UNSIGNED TYPE_QUALIFIER VOID
+%token TYPEDEF EXTERN STATIC AUTO REGISTER
+%token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
+%token STRUCT UNION ENUM ELLIPSIS
 
 %token CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
 %start translation_unit
-%glr-parser
 %%
-
-
 
 primary_expression
 	: IDENTIFIER
 	| CONSTANT
-	| DEF
 	| STRING_LITERAL
 	| '(' expression ')'
-	| Define primary_expression
 	;
-
-Define							//Macros
-	: DEF ;
 
 postfix_expression
 	: primary_expression
@@ -43,7 +30,8 @@ postfix_expression
 	| postfix_expression '(' argument_expression_list ')'
 	| postfix_expression '.' IDENTIFIER
 	| postfix_expression PTR_OP IDENTIFIER
-	| postfix_expression INC_DEC_OP
+	| postfix_expression INC_OP
+	| postfix_expression DEC_OP
 	;
 
 argument_expression_list
@@ -53,14 +41,20 @@ argument_expression_list
 
 unary_expression
 	: postfix_expression
-	| INC_DEC_OP unary_expression
+	| INC_OP unary_expression
+	| DEC_OP unary_expression
 	| unary_operator cast_expression
 	| SIZEOF unary_expression
 	| SIZEOF '(' type_name ')'
 	;
 
 unary_operator
-	: UNARY_OP
+	: '&'
+	| '*'
+	| '+'
+	| '-'
+	| '~'
+	| '!'
 	;
 
 cast_expression
@@ -83,18 +77,22 @@ additive_expression
 
 shift_expression
 	: additive_expression
-	| shift_expression SHIFT_OP additive_expression
+	| shift_expression LEFT_OP additive_expression
+	| shift_expression RIGHT_OP additive_expression
 	;
 
 relational_expression
 	: shift_expression
-	| relational_expression LG_OP shift_expression
-	| relational_expression LE_GE_OP shift_expression
+	| relational_expression '<' shift_expression
+	| relational_expression '>' shift_expression
+	| relational_expression LE_OP shift_expression
+	| relational_expression GE_OP shift_expression
 	;
 
 equality_expression
 	: relational_expression
-	| equality_expression EQ_NE_OP relational_expression
+	| equality_expression EQ_OP relational_expression
+	| equality_expression NE_OP relational_expression
 	;
 
 and_expression
@@ -107,7 +105,7 @@ exclusive_or_expression
 	| exclusive_or_expression '^' and_expression
 	;
 
-inclusive_or_expression																		//Bitwise OR?
+inclusive_or_expression
 	: exclusive_or_expression
 	| inclusive_or_expression '|' exclusive_or_expression
 	;
@@ -134,7 +132,16 @@ assignment_expression
 
 assignment_operator
 	: '='
-	| OP_ASSIGN
+	| MUL_ASSIGN
+	| DIV_ASSIGN
+	| MOD_ASSIGN
+	| ADD_ASSIGN
+	| SUB_ASSIGN
+	| LEFT_ASSIGN
+	| RIGHT_ASSIGN
+	| AND_ASSIGN
+	| XOR_ASSIGN
+	| OR_ASSIGN
 	;
 
 expression
@@ -152,10 +159,12 @@ declaration
 	;
 
 declaration_specifiers
-	: type_specifier
-	//| type_specifier declaration_specifiers					//removed because there is a need to check for declarations like 'int int', 'unsigned unsigned', 'usigned signed signed signed ... int' etc which the grammar presently accepts as valid
-	//| type_qualifier																	//Is this required if the next one is removed?
-	//| type_qualifier declaration_specifiers						//Need to remove this too?
+	: storage_class_specifier
+	| storage_class_specifier declaration_specifiers
+	| type_specifier
+	| type_specifier declaration_specifiers
+	| type_qualifier
+	| type_qualifier declaration_specifiers
 	;
 
 init_declarator_list
@@ -168,17 +177,48 @@ init_declarator
 	| declarator '=' initializer
 	;
 
+storage_class_specifier
+	: TYPEDEF
+	| EXTERN
+	| STATIC
+	| AUTO
+	| REGISTER
+	;
+
 type_specifier
 	: VOID
 	| CHAR
-	//| SHORT
+	| SHORT
 	| INT
-	//| LONG
-	//| SIGNED
-	//| UNSIGNED				//Are we supporting all these?
-	//| TYPE_NAME
+	| LONG
+	| FLOAT
+	| DOUBLE
+	| SIGNED
+	| UNSIGNED
+	| struct_or_union_specifier
+	| enum_specifier
+	| TYPE_NAME
 	;
 
+struct_or_union_specifier
+	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'
+	| struct_or_union '{' struct_declaration_list '}'
+	| struct_or_union IDENTIFIER
+	;
+
+struct_or_union
+	: STRUCT
+	| UNION
+	;
+
+struct_declaration_list
+	: struct_declaration
+	| struct_declaration_list struct_declaration
+	;
+
+struct_declaration
+	: specifier_qualifier_list struct_declarator_list ';'
+	;
 
 specifier_qualifier_list
 	: type_specifier specifier_qualifier_list
@@ -187,12 +227,41 @@ specifier_qualifier_list
 	| type_qualifier
 	;
 
+struct_declarator_list
+	: struct_declarator
+	| struct_declarator_list ',' struct_declarator
+	;
+
+struct_declarator
+	: declarator
+	| ':' constant_expression
+	| declarator ':' constant_expression
+	;
+
+enum_specifier
+	: ENUM '{' enumerator_list '}'
+	| ENUM IDENTIFIER '{' enumerator_list '}'
+	| ENUM IDENTIFIER
+	;
+
+enumerator_list
+	: enumerator
+	| enumerator_list ',' enumerator
+	;
+
+enumerator
+	: IDENTIFIER
+	| IDENTIFIER '=' constant_expression
+	;
+
 type_qualifier
-	: TYPE_QUALIFIER
+	: CONST
+	| VOLATILE
 	;
 
 declarator
-	: direct_declarator
+	: pointer direct_declarator
+	| direct_declarator
 	;
 
 direct_declarator
@@ -205,8 +274,22 @@ direct_declarator
 	| direct_declarator '(' ')'
 	;
 
+pointer
+	: '*'
+	| '*' type_qualifier_list
+	| '*' pointer
+	| '*' type_qualifier_list pointer
+	;
+
+type_qualifier_list
+	: type_qualifier
+	| type_qualifier_list type_qualifier
+	;
+
+
 parameter_type_list
 	: parameter_list
+	| parameter_list ',' ELLIPSIS
 	;
 
 parameter_list
@@ -231,7 +314,9 @@ type_name
 	;
 
 abstract_declarator
-	: direct_abstract_declarator
+	: pointer
+	| direct_abstract_declarator
+	| pointer direct_abstract_declarator
 	;
 
 direct_abstract_declarator
@@ -262,7 +347,6 @@ statement
 	| compound_statement
 	| expression_statement
 	| selection_statement
-	//| selection_statement1
 	| iteration_statement
 	| jump_statement
 	;
@@ -296,14 +380,16 @@ expression_statement
 	;
 
 selection_statement
-	: IF '(' expression ')' statement					%prec NO_ELSE
+	: IF '(' expression ')' statement				%prec NO_ELSE
 	| IF '(' expression ')' statement ELSE statement
+	| SWITCH '(' expression ')' statement
 	;
-
 
 iteration_statement
 	: WHILE '(' expression ')' statement
 	| DO statement WHILE '(' expression ')' ';'
+	| FOR '(' expression_statement expression_statement ')' statement
+	| FOR '(' expression_statement expression_statement expression ')' statement
 	;
 
 jump_statement
@@ -317,7 +403,6 @@ jump_statement
 translation_unit
 	: external_declaration
 	| translation_unit external_declaration
-	| Define translation_unit
 	;
 
 external_declaration
@@ -344,8 +429,8 @@ void display_symbol_table(){
   for(i=0;i < ht->size; i++){
     if(ht->table[i])
       printf("%d - %s : %s\n",i, ht->table[i]->key, ht->table[i]->value);
-    else
-      printf("%d - NULL\n", i);
+    /*else
+      printf("%d - NULL\n", i);*/
   }
 }
 
