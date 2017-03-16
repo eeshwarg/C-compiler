@@ -1,6 +1,8 @@
 #include<vector>
 #include "hashtable.h"
 
+using namespace std;
+
 class sym_table{
     private:
       vector<hashtable_t*> s;
@@ -25,9 +27,9 @@ class sym_table{
         new_scope(); //for global scope
       }
 
-      char* find_id(char* key){
+      value_s* find_id(char* key){
         vector<hashtable_t*>::iterator it;
-        char* get_info;
+        value_s* get_info;
         hashtable_t* ht;
 
         for(it = s.end() - 1; it >= s.begin(); it--){
@@ -41,10 +43,18 @@ class sym_table{
         return get_info;
       }
 
-      void save_id(char* key, char* token){
+      void save_id(char* key, value_s* value){
+        printf("Received %s. Current status - \n", key);
+        display();
         hashtable_t* ht = s.back();
         if( ht_get(ht, key) == NULL){
-          ht_set(key, token);
+          ht_set(ht, key, value);
+        }
+      }
+
+      void display(){
+        for(vector<hashtable_t*>::iterator it = s.begin(); it != s.end(); it++){
+          display_table(*it);
         }
       }
 };

@@ -140,9 +140,9 @@ init_declarator	: declarator
 								;
 
 datatype: VOID
-							| CHAR
-							| INT
-							;
+				| CHAR
+				| INT
+				;
 
 declarator: IDENTIFIER
 					| '(' declarator ')'

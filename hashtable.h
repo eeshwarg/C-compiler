@@ -1,4 +1,4 @@
-#define _XOPEN_SOURCE 500 /* Enable certain library functions (strdup) on linux.  See feature_test_macros(7) */
+//#define _XOPEN_SOURCE 500 /* Enable certain library functions (strdup) on linux.  See feature_test_macros(7) */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ typedef struct value_s {
 
 struct entry_s {
 	char *key;
-	value_s value;
+	value_s *value;
 	struct entry_s *next;
 };
 
@@ -65,7 +65,7 @@ hashtable_t *ht_create( int size ) {
 /* Hash a string for a particular hash table. */
 int ht_hash( hashtable_t *hashtable, char *key ) {
 
-	unsigned long int hashval;
+	unsigned long int hashval=100;
 	int i = 0;
 
 	/* Convert our string to an integer */
@@ -79,10 +79,14 @@ int ht_hash( hashtable_t *hashtable, char *key ) {
 }
 
 /* Create a key-value pair. */
-entry_t *ht_newpair( char *key, value_s value ) {
+entry_t *ht_newpair( char *key, value_s *value ) {
 	entry_t *newpair;
 
 	if( ( newpair = (entry_t*)malloc( sizeof( entry_t ) ) ) == NULL ) {
+		return NULL;
+	}
+
+	if( (newpair->value = (value_s*)malloc( sizeof( value_s ) ) ) == NULL){
 		return NULL;
 	}
 
@@ -90,18 +94,18 @@ entry_t *ht_newpair( char *key, value_s value ) {
 		return NULL;
 	}
 
-	if( ( newpair->value.other = strdup( value.other ) ) == NULL ) {
+	if( ( newpair->value->other = strdup( value->other ) ) == NULL ) {
 		return NULL;
 	}
-	newpair->value.type = value.type;
-	newpair->value.token = value.token;
+	newpair->value->type = value->type;
+	newpair->value->token = value->token;
 	newpair->next = NULL;
 
 	return newpair;
 }
 
 /* Insert a key-value pair into a hash table. */
-void ht_set( hashtable_t *hashtable, char *key, value_s value ) {
+void ht_set( hashtable_t *hashtable, char *key, value_s *value ) {
 	int bin = 0;
 	entry_t *newpair = NULL;
 	entry_t *next = NULL;
@@ -119,8 +123,11 @@ void ht_set( hashtable_t *hashtable, char *key, value_s value ) {
 	/* There's already a pair.  Let's replace that string. */
 	if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
 
-		//free( next->value );
-		next->value = value;
+		free( next->value );
+		next->value = (value_s*)malloc( sizeof( value_s ) );
+		next->value->other = strdup(value->other);
+		next->value->token = value->token;
+		next->value->type = value->type;
 
 	/* Nope, could't find it.  Time to grow a pair. */
 	} else {
@@ -144,7 +151,7 @@ void ht_set( hashtable_t *hashtable, char *key, value_s value ) {
 }
 
 /* Retrieve a key-value pair from a hash table. */
-value_s ht_get( hashtable_t *hashtable, char *key ) {
+value_s* ht_get( hashtable_t *hashtable, char *key ) {
 	int bin = 0;
 	entry_t *pair;
 
@@ -164,4 +171,17 @@ value_s ht_get( hashtable_t *hashtable, char *key ) {
 		return pair->value;
 	}
 
+}
+
+void display_table(hashtable_t* ht){
+	printf("---------------------------------\n");
+  printf("Symbol Table - \n");
+  int i = 0;
+  for(i=0;i < ht->size; i++){
+    if(ht->table[i])
+      printf("%d - %s : %d %d\n",i, ht->table[i]->key, ht->table[i]->value->token, ht->table[i]->value->type);
+    /*else
+      printf("%d - NULL\n", i);*/
+  }
+	printf("---------------------------------\n");
 }
