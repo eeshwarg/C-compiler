@@ -7,7 +7,6 @@
 %token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
 %token XOR_ASSIGN OR_ASSIGN
 
-%token TYPEDEF EXTERN STATIC AUTO REGISTER
 %token CHAR INT VOID
 
 %token IF ELSE WHILE DO CONTINUE BREAK RETURN
@@ -47,7 +46,7 @@ unary_operator: '&'
 							;
 
 cast_expression	: unary_expression
-								| '(' type_name ')' cast_expression
+								| '(' type_specifier ')' cast_expression
 								;
 
 multiplicative_expression	: cast_expression
@@ -123,13 +122,9 @@ expression: assignment_expression
 						| expression ',' assignment_expression
 						;
 
-declaration	: declaration_specifiers ';'
-						| declaration_specifiers init_declarator_list ';'
+declaration	: type_specifier ';'
+						| type_specifier init_declarator_list ';'
 						;
-
-declaration_specifiers: type_specifier
-											| type_specifier declaration_specifiers
-											;
 
 init_declarator_list: init_declarator
 										| init_declarator_list ',' init_declarator
@@ -143,10 +138,6 @@ type_specifier: VOID
 							| CHAR
 							| INT
 							;
-
-specifier_qualifier_list: type_specifier specifier_qualifier_list
-												| type_specifier
-												;
 
 declarator: IDENTIFIER
 					| '(' declarator ')'
@@ -162,16 +153,13 @@ parameter_list: parameter_declaration
 							| parameter_list ',' parameter_declaration
 							;
 
-parameter_declaration	: declaration_specifiers declarator
-											| declaration_specifiers
+parameter_declaration	: type_specifier declarator
+											| type_specifier
 											;
 
 identifier_list	: IDENTIFIER
 								| identifier_list ',' IDENTIFIER
 								;
-
-type_name	: specifier_qualifier_list
-					;
 
 initializer	: assignment_expression
 						| '{' initializer_list '}'
@@ -229,8 +217,8 @@ external_declaration: function_definition
 										| declaration
 										;
 
-function_definition	: declaration_specifiers declarator declaration_list compound_statement
-										| declaration_specifiers declarator compound_statement
+function_definition	: type_specifier declarator declaration_list compound_statement
+										| type_specifier declarator compound_statement
 										| declarator declaration_list compound_statement
 										| declarator compound_statement
 										;
