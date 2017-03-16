@@ -1,9 +1,9 @@
 %{
-  #include "hashtable.h"
-  extern hashtable_t *ht = NULL;
-  void tabulate_token(char* lexeme, char* token);
+  #include <stdio.h>
+  #include "y.tab.h"
+
+  void display();
   void count_comment(char* s);
-  void print_token(char *token);
 %}
 
 
@@ -40,24 +40,16 @@ MACRO 			          #define({WHITESPACE}){IDENTIFIER}(.)+
 
 SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
-%{
-// int yylineno;
-#include <stdio.h>
-#include "y.tab.h"
-
-void display();
-%}
-
 %%
 
 {NEWLINE}   		              { yylineno++;display();}
 {MULTI_LINE_COMMENT}					{ count_comment(yytext); }
 {SINGLE_LINE_COMMENT}					{ /*do nothing*/ }
 {LIBRARY} 		                { display(); }
-{MACRO} 			                { display(); tabulate_token(yytext,"Constant"); }
-{NUMERIC_CONST}			          { display(); tabulate_token(yytext,"Constant"); return CONSTANT; }
+{MACRO} 			                { display();  }
+{NUMERIC_CONST}			          { display(); return CONSTANT; }
 
-{STRING}			                { display(); tabulate_token(yytext,"Constant"); return STRING_LITERAL; }
+{STRING}			                { display(); return STRING_LITERAL; }
 {INCOMPLETE_STRING}           { display(); yyerror("<- Error! Incomplete string"); exit(1);}
 
 {SYMBOL}                      { display(); return(yytext[0]);}
@@ -87,30 +79,30 @@ void display();
 "|="                        	{ display(); return OR_ASSIGN; }
 
 
-"char"			                  { display(); tabulate_token(yytext,"Keyword"); return CHAR; }
-"int"			                    { display(); tabulate_token(yytext,"Keyword"); return INT; }
-"void"			                  { display(); tabulate_token(yytext,"Keyword"); return VOID; }
+"char"			                  { display(); return CHAR; }
+"int"			                    { display(); return INT; }
+"void"			                  { display(); return VOID; }
 
-"if"				                  { display(); tabulate_token(yytext,"Keyword"); return IF; }
-"else"			                  { display(); tabulate_token(yytext,"Keyword"); return ELSE; }
+"if"				                  { display(); return IF; }
+"else"			                  { display(); return ELSE; }
 
-"while"			                  { display(); tabulate_token(yytext,"Keyword"); return WHILE; }
-"do"			                    { display(); tabulate_token(yytext,"Keyword"); return DO; }
+"while"			                  { display(); return WHILE; }
+"do"			                    { display(); return DO; }
 
-"continue"		                { display(); tabulate_token(yytext,"Keyword"); return CONTINUE; }
-"break"			                  { display(); tabulate_token(yytext,"Keyword"); return BREAK; }
+"continue"		                { display(); return CONTINUE; }
+"break"			                  { display(); return BREAK; }
 
 
-"return"		                  { display(); tabulate_token(yytext,"Keyword"); return RETURN; }
+"return"		                  { display(); return RETURN; }
 
 
 
 
 "."			                      { display(); return('.'); }
 
-{ARITHMETIC_OP}               { display(); tabulate_token(yytext,"Operator"); return(yytext[0]);}
+{ARITHMETIC_OP}               { display(); return(yytext[0]);}
 
-{IDENTIFIER}    		          { display(); tabulate_token(yytext,"Identifier"); return IDENTIFIER; }
+{IDENTIFIER}    		          { display(); return IDENTIFIER; }
 [ \t\v\n\f]		                { display(); }
 .			                        { return yytext[0]; }
 
@@ -122,15 +114,6 @@ int yywrap(){
 
 void display(){
 	ECHO;
-}
-
-void tabulate_token(char* lexeme, char* token){
-  if(ht==NULL){
-    ht = ht_create(100);
-  }
-  if(ht_get(ht, lexeme) == NULL){
-    ht_set(ht, lexeme, token);
-  }
 }
 
 void count_comment(char* s){
