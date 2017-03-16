@@ -1,0 +1,3 @@
+flex parser.l
+yacc -d parser.y
+gcc y.tab.c -ll -ly
