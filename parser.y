@@ -1,8 +1,20 @@
 %{
+	#include "symbol_table.cpp"
+	#include<cstdio>
+	using namespace std;
+
+	sym_table st;
+	type_e dtype;
+	token_e dtoken;
+
 	int yylex(void);
 	void yyerror(char *);
 %}
 
+%union{
+	int ival;
+	char* str;
+}
 
 %nonassoc NO_ELSE
 %nonassoc  ELSE
@@ -20,7 +32,10 @@
 %start translation_unit
 %%
 
-primary_expression: IDENTIFIER
+primary_expression: IDENTIFIER	{if(st.find_id( $<str>1 ) == NULL)
+																		yyerror("Undeclared identifier!");
+																	else
+																		st.display();}
 									| CONSTANT
 									| STRING_LITERAL
 									| '(' expression ')'
@@ -135,20 +150,22 @@ init_declarator_list: init_declarator
 										| init_declarator_list ',' init_declarator
 										;
 
-init_declarator	: declarator
-								| declarator '=' initializer
+init_declarator	: declarator									{dtoken = VAR;}
+								| declarator '=' initializer	{dtoken = VAR;}
 								;
 
-datatype: VOID
-				| CHAR
-				| INT
+datatype: VOID 	{dtype = Void;}
+				| CHAR	{dtype = Char;}
+				| INT		{dtype = Int;}
 				;
 
-declarator: IDENTIFIER
+declarator: IDENTIFIER	{printf("%d %d", dtype, dtoken);
+													value_s* v = make_value(dtoken,dtype,NULL);
+													st.save_id( $<str>1 , v );}
 					| '(' declarator ')'
-					| declarator '(' parameter_type_list ')'
-					| declarator '(' identifier_list ')'
-					| declarator '(' ')'
+					| declarator '(' parameter_type_list ')'	{dtoken = FUNC;}
+					| declarator '(' identifier_list ')'			{dtoken = FUNC;}
+					| declarator '(' ')'											{printf("hi\n\n\n");dtoken = FUNC;}
 					;
 
 parameter_type_list	: parameter_list
@@ -218,7 +235,7 @@ translation_unit: external_declaration
 								| translation_unit external_declaration
 								;
 
-external_declaration: function_definition
+external_declaration: function_definition {dtoken=FUNC;}
 										| declaration
 										;
 
@@ -240,6 +257,7 @@ void yyerror(char *s) {
 int main(int argc, char *argv[])
 {
 	yyin = fopen(argv[1], "r");
+	//st = new sym_table();
 
   if(!yyparse())
 		printf("\nParsing complete\n");

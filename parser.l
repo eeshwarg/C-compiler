@@ -102,7 +102,7 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
 {ARITHMETIC_OP}               { display(); return(yytext[0]);}
 
-{IDENTIFIER}    		          { display(); return IDENTIFIER; }
+{IDENTIFIER}    		          { display(); yylval.str = strdup(yytext); return IDENTIFIER; }
 [ \t\v\n\f]		                { display(); }
 .			                        { return yytext[0]; }
 
