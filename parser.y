@@ -1,3 +1,9 @@
+%{
+	int yylex(void);
+	void yyerror(char *);
+%}
+
+
 %nonassoc NO_ELSE
 %nonassoc  ELSE
 
@@ -227,19 +233,7 @@ function_definition	: datatype declarator declaration_list compound_statement
 #include<ctype.h>
 #include <stdio.h>
 
-void display_symbol_table(){
-	printf("---------------------------------\n");
-  printf("Symbol Table - \n");
-  int i = 0;
-  for(i=0;i < ht->size; i++){
-    if(ht->table[i])
-      printf("%d - %s : %s\n",i, ht->table[i]->key, ht->table[i]->value);
-    /*else
-      printf("%d - NULL\n", i);*/
-  }
-}
-
-yyerror(char *s) {
+void yyerror(char *s) {
 	printf("\nLine %d : %s\n", (yylineno), s);
 }
 
@@ -252,8 +246,6 @@ int main(int argc, char *argv[])
 	else
 		printf("\nParsing failed\n");
 	fclose(yyin);
-	printf("Symbol table - %p\n", ht);
-	display_symbol_table();
 	return 0;
 }
 

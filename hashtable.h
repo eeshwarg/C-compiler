@@ -30,12 +30,12 @@ hashtable_t *ht_create( int size ) {
 	if( size < 1 ) return NULL;
 
 	/* Allocate the table itself. */
-	if( ( hashtable = malloc( sizeof( hashtable_t ) ) ) == NULL ) {
+	if( ( hashtable = (hashtable_t*)malloc( sizeof( hashtable_t ) ) ) == NULL ) {
 		return NULL;
 	}
 
 	/* Allocate pointers to the head nodes. */
-	if( ( hashtable->table = malloc( sizeof( entry_t * ) * size ) ) == NULL ) {
+	if( ( hashtable->table = (entry_s**)malloc( sizeof( entry_t * ) * size ) ) == NULL ) {
 		return NULL;
 	}
 	for( i = 0; i < size; i++ ) {
@@ -67,7 +67,7 @@ int ht_hash( hashtable_t *hashtable, char *key ) {
 entry_t *ht_newpair( char *key, char *value ) {
 	entry_t *newpair;
 
-	if( ( newpair = malloc( sizeof( entry_t ) ) ) == NULL ) {
+	if( ( newpair = (entry_t*)malloc( sizeof( entry_t ) ) ) == NULL ) {
 		return NULL;
 	}
 
