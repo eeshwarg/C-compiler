@@ -5,9 +5,24 @@
 #include <limits.h>
 #include <string.h>
 
+enum token_e{
+	VAR,
+	FUNC
+};
+
+enum type_e{
+	Int, Char, Void
+};
+
+typedef struct value_s {
+	token_e token;
+	type_e type;
+	char* other;
+}value_s;
+
 struct entry_s {
 	char *key;
-	char *value;
+	value_s value;
 	struct entry_s *next;
 };
 
@@ -64,7 +79,7 @@ int ht_hash( hashtable_t *hashtable, char *key ) {
 }
 
 /* Create a key-value pair. */
-entry_t *ht_newpair( char *key, char *value ) {
+entry_t *ht_newpair( char *key, value_s value ) {
 	entry_t *newpair;
 
 	if( ( newpair = (entry_t*)malloc( sizeof( entry_t ) ) ) == NULL ) {
@@ -75,17 +90,18 @@ entry_t *ht_newpair( char *key, char *value ) {
 		return NULL;
 	}
 
-	if( ( newpair->value = strdup( value ) ) == NULL ) {
+	if( ( newpair->value.other = strdup( value.other ) ) == NULL ) {
 		return NULL;
 	}
-
+	newpair->value.type = value.type;
+	newpair->value.token = value.token;
 	newpair->next = NULL;
 
 	return newpair;
 }
 
 /* Insert a key-value pair into a hash table. */
-void ht_set( hashtable_t *hashtable, char *key, char *value ) {
+void ht_set( hashtable_t *hashtable, char *key, value_s value ) {
 	int bin = 0;
 	entry_t *newpair = NULL;
 	entry_t *next = NULL;
@@ -103,8 +119,8 @@ void ht_set( hashtable_t *hashtable, char *key, char *value ) {
 	/* There's already a pair.  Let's replace that string. */
 	if( next != NULL && next->key != NULL && strcmp( key, next->key ) == 0 ) {
 
-		free( next->value );
-		next->value = strdup( value );
+		//free( next->value );
+		next->value = value;
 
 	/* Nope, could't find it.  Time to grow a pair. */
 	} else {
