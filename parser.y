@@ -46,7 +46,7 @@ unary_operator: '&'
 							;
 
 cast_expression	: unary_expression
-								| '(' type_specifier ')' cast_expression
+								| '(' datatype ')' cast_expression
 								;
 
 multiplicative_expression	: cast_expression
@@ -122,8 +122,7 @@ expression: assignment_expression
 						| expression ',' assignment_expression
 						;
 
-declaration	: type_specifier ';'
-						| type_specifier init_declarator_list ';'
+declaration	: datatype init_declarator_list ';'
 						;
 
 init_declarator_list: init_declarator
@@ -134,7 +133,7 @@ init_declarator	: declarator
 								| declarator '=' initializer
 								;
 
-type_specifier: VOID
+datatype: VOID
 							| CHAR
 							| INT
 							;
@@ -153,8 +152,8 @@ parameter_list: parameter_declaration
 							| parameter_list ',' parameter_declaration
 							;
 
-parameter_declaration	: type_specifier declarator
-											| type_specifier
+parameter_declaration	: datatype declarator
+											| datatype
 											;
 
 identifier_list	: IDENTIFIER
@@ -217,8 +216,8 @@ external_declaration: function_definition
 										| declaration
 										;
 
-function_definition	: type_specifier declarator declaration_list compound_statement
-										| type_specifier declarator compound_statement
+function_definition	: datatype declarator declaration_list compound_statement
+										| datatype declarator compound_statement
 										| declarator declaration_list compound_statement
 										| declarator compound_statement
 										;
