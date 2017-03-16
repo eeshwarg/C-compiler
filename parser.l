@@ -89,10 +89,6 @@ void display();
 
 "char"			                  { display(); tabulate_token(yytext,"Keyword"); return CHAR; }
 "int"			                    { display(); tabulate_token(yytext,"Keyword"); return INT; }
-"signed"		                  { display(); tabulate_token(yytext,"Keyword"); return SIGNED; }
-"unsigned"		                { display(); tabulate_token(yytext,"Keyword"); return UNSIGNED; }
-"const"                       { display(); tabulate_token(yytext,"Keyword"); return CONST; }
-"volatile"        			      { display(); tabulate_token(yytext,"Keyword"); return VOLATILE; }
 "void"			                  { display(); tabulate_token(yytext,"Keyword"); return VOID; }
 
 "if"				                  { display(); tabulate_token(yytext,"Keyword"); return IF; }
@@ -104,7 +100,6 @@ void display();
 "continue"		                { display(); tabulate_token(yytext,"Keyword"); return CONTINUE; }
 "break"			                  { display(); tabulate_token(yytext,"Keyword"); return BREAK; }
 
-"goto"			                  { display(); tabulate_token(yytext,"Keyword"); return GOTO; }
 
 "return"		                  { display(); tabulate_token(yytext,"Keyword"); return RETURN; }
 
