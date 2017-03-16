@@ -169,7 +169,6 @@ void ht_set( hashtable_t *hashtable, char *key, value_s *value ) {
 
 /* Retrieve a key-value pair from a hash table. */
 value_s* ht_get( hashtable_t *hashtable, char *key ) {
-	printf("ht_get\n");
 	int bin = 0;
 	entry_t *pair;
 
