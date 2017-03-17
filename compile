@@ -1,3 +1,9 @@
-flex parser.l
-yacc -d parser.y
-g++ y.tab.c -ll -ly
+if [ $# -eq 0 ];
+  then
+    printf "Enter the name of the C file to be compiled as a command line argument.\nExample usage: ./compile test.c\n"
+else
+  flex parser.l
+  yacc -d parser.y
+  g++ y.tab.c -ll -ly
+  ./a.out "$1"
+fi
