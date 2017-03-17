@@ -3,7 +3,7 @@ This is the frontend of a compiler for a subset of C. The stages of the compiler
 ## Getting started
 The tools used for building this compiler are `flex` for the lexical phase and `yacc` for the syntax and semantic phases. 
 ### Installing
-They can be installed with the commands 
+The tools can be installed with the commands 
 ```
   sudo apt-get install flex
 ```
