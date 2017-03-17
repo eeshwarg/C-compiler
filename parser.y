@@ -40,7 +40,10 @@
 
 primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<str>1 );
 																	if(v == NULL)
+																	{
 																		yyerror("Undeclared identifier!");
+																		YYABORT;
+																	}
 																	else
 																		$<type>$ = v->type;}
 									| CONSTANT		{$<type>$ = Int;}
@@ -130,7 +133,12 @@ conditional_expression: logical_or_expression { $<type>$ = $<type>1; }
 											;
 
 assignment_expression	: conditional_expression { $<type>$ = $<type>1; }
-											| unary_expression assignment_operator assignment_expression { if( $<type>1 != $<type>3 ) yyerror("Type mismatch!"); }
+											| unary_expression assignment_operator assignment_expression { if( $<type>1 != $<type>3 )
+																																										 {
+																																												yyerror("Type mismatch!");
+																																												YYABORT;
+																																										 }
+																																										}
 											;
 
 assignment_operator	: '='
@@ -160,7 +168,10 @@ init_declarator_list: init_declarator
 init_declarator	: declarator
 								| declarator '=' initializer {value_s* v = st.find_id( $<str>1 );
 																								if (v->type != $<type>3)
+																								{
 																									yyerror("Type mismatch!");
+																									YYABORT;
+																								}
 																								else
 																									$<type>$ = $<type>3;}
 								;
@@ -170,10 +181,15 @@ datatype: VOID 	{dtype = Void;}
 				| INT		{dtype = Int;}
 				;
 
-declarator: IDENTIFIER	{$<str>$ = $<str>1;
-													value_s* v = make_value(VAR,dtype,NULL);
-													if( st.save_id( $<str>1 , v ) == 0)
-														yyerror("Variable already declared!");}
+declarator: IDENTIFIER		{	$<str>$ = $<str>1;
+														value_s* v = make_value(VAR,dtype,NULL);
+														if( st.save_id( $<str>1 , v ) == 0)
+														{
+															yyerror("Variable already declared!");
+															YYABORT;
+														}
+
+													}
 					| '(' declarator ')'
 					| declarator '(' parameter_type_list ')'
 					| declarator '(' identifier_list ')'
@@ -205,7 +221,7 @@ initializer_list: initializer
 								| initializer_list ',' initializer
 								;
 
-statement	: compound_statement
+statement	: compound_statement 
 					| expression_statement
 					| selection_statement
 					| iteration_statement

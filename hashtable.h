@@ -191,7 +191,7 @@ value_s* ht_get( hashtable_t *hashtable, char *key ) {
 }
 
 void display_table(hashtable_t* ht){
-	printf("---------------------------------\n");
+	printf("\n---------------------------------\n");
   printf("Symbol Table - \n");
   int i = 0;
   for(i=0;i < ht->size; i++){
