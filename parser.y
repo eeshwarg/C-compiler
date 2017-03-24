@@ -10,9 +10,12 @@
 	int yylex(void);
 	void yyerror(char *);
 
-	void type_error(type_e t1, type_e t2){
-		if(t1 != t2)
+	int type_error(type_e t1, type_e t2){ //returns 1 if error, 0 if not
+		if(t1 != t2){
 			yyerror("Type mismatch!\n");
+			return 1;
+		}
+		return 0;
 	}
 %}
 
@@ -25,7 +28,7 @@
 %nonassoc NO_ELSE
 %nonassoc  ELSE
 
-%token IDENTIFIER CONSTANT STRING_LITERAL
+%token IDENTIFIER CONSTANT STRING_LITERAL CHAR_CONST
 %token INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
 %token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
@@ -47,6 +50,7 @@ primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<str>1 );
 																	else
 																		$<type>$ = v->type;}
 									| CONSTANT		{$<type>$ = Int;}
+									| CHAR_CONST 	{$<type>$ = Char;}
 									| STRING_LITERAL	{ $<type>$ = Char;}
 									| '(' expression ')' {$<str>$ = $<str>2;}
 									;
@@ -81,51 +85,69 @@ cast_expression	: unary_expression { $<type>$ = $<type>1; }
 								;
 
 multiplicative_expression	: cast_expression { $<type>$ = $<type>1; }
-													| multiplicative_expression '*' cast_expression
-													| multiplicative_expression '/' cast_expression
-													| multiplicative_expression '%' cast_expression
+													| multiplicative_expression '*' cast_expression {if( !type_error($<type>1, $<type>3) )
+													 																										$<type>$ = $<type>1;}
+													| multiplicative_expression '/' cast_expression {if( !type_error($<type>1, $<type>3) )
+													 																										$<type>$ = $<type>1;}
+													| multiplicative_expression '%' cast_expression {if( !type_error($<type>1, $<type>3) )
+													 																										$<type>$ = $<type>1;}
 													;
 
 additive_expression	: multiplicative_expression { $<type>$ = $<type>1; }
-										| additive_expression '+' multiplicative_expression
-										| additive_expression '-' multiplicative_expression
+										| additive_expression '+' multiplicative_expression	{if( !type_error($<type>1, $<type>3) )
+																																				$<type>$ = $<type>1;}
+										| additive_expression '-' multiplicative_expression	{if( !type_error($<type>1, $<type>3) )
+																																				$<type>$ = $<type>1;}
 										;
 
 shift_expression: additive_expression { $<type>$ = $<type>1; }
-								| shift_expression LEFT_OP additive_expression
-								| shift_expression RIGHT_OP additive_expression
+								| shift_expression LEFT_OP additive_expression	{if( !type_error($<type>1, $<type>3) )
+																																		$<type>$ = $<type>1;}
+								| shift_expression RIGHT_OP additive_expression {if( !type_error($<type>1, $<type>3) )
+																																		$<type>$ = $<type>1;}
 								;
 
 relational_expression	: shift_expression { $<type>$ = $<type>1; }
-											| relational_expression '<' shift_expression
-											| relational_expression '>' shift_expression
-											| relational_expression LE_OP shift_expression
-											| relational_expression GE_OP shift_expression
+											| relational_expression '<' shift_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
+											| relational_expression '>' shift_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
+											| relational_expression LE_OP shift_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
+											| relational_expression GE_OP shift_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
 											;
 
 equality_expression	: relational_expression { $<type>$ = $<type>1; }
-										| equality_expression EQ_OP relational_expression
-										| equality_expression NE_OP relational_expression
+										| equality_expression EQ_OP relational_expression {if( !type_error($<type>1, $<type>3) )
+																																				$<type>$ = $<type>1;}
+										| equality_expression NE_OP relational_expression {if( !type_error($<type>1, $<type>3) )
+																																				$<type>$ = $<type>1;}
 										;
 
 and_expression: equality_expression { $<type>$ = $<type>1; }
-							| and_expression '&' equality_expression
+							| and_expression '&' equality_expression {if( !type_error($<type>1, $<type>3) )
+																																	$<type>$ = $<type>1;}
 							;
 
 exclusive_or_expression	: and_expression { $<type>$ = $<type>1; }
-												| exclusive_or_expression '^' and_expression
+												| exclusive_or_expression '^' and_expression {if( !type_error($<type>1, $<type>3) )
+																																						$<type>$ = $<type>1;}
 												;
 
 inclusive_or_expression	: exclusive_or_expression { $<type>$ = $<type>1; }
-												| inclusive_or_expression '|' exclusive_or_expression
+												| inclusive_or_expression '|' exclusive_or_expression {if( !type_error($<type>1, $<type>3) )
+																																						$<type>$ = $<type>1;}
 												;
 
 logical_and_expression: inclusive_or_expression { $<type>$ = $<type>1; }
-											| logical_and_expression AND_OP inclusive_or_expression
+											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
 											;
 
 logical_or_expression	: logical_and_expression { $<type>$ = $<type>1; }
-											| logical_or_expression OR_OP logical_and_expression
+											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<type>1, $<type>3) )
+																																					$<type>$ = $<type>1;}
 											;
 
 conditional_expression: logical_or_expression { $<type>$ = $<type>1; }
@@ -133,12 +155,7 @@ conditional_expression: logical_or_expression { $<type>$ = $<type>1; }
 											;
 
 assignment_expression	: conditional_expression { $<type>$ = $<type>1; }
-											| unary_expression assignment_operator assignment_expression { if( $<type>1 != $<type>3 )
-																																										 {
-																																												yyerror("Type mismatch!");
-																																												/*YYABORT;*/
-																																										 }
-																																										}
+											| unary_expression assignment_operator assignment_expression { type_error($<type>1, $<type>3);}
 											;
 
 assignment_operator	: '='
@@ -167,12 +184,7 @@ init_declarator_list: init_declarator
 
 init_declarator	: declarator
 								| declarator '=' initializer {value_s* v = st.find_id( $<str>1 );
-																								if (v->type != $<type>3)
-																								{
-																									yyerror("Type mismatch!");
-																									/*YYABORT;*/
-																								}
-																								else
+																								if( !type_error(v->type, $<type>3) )
 																									$<type>$ = $<type>3;}
 								;
 

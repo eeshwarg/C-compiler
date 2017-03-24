@@ -31,6 +31,7 @@ COMPARISON_OP   			\>|\<|\=\=|\!\=|\>\=|\<\=
 ASSIGNMENT_OP         "="|"*="|"/="|"%="|"+="|"-="|"<<="|">>="|"&="|"^="|"|="
 OPERATOR  						{UNARY_OP}|{LOGICAL_OP}|{COMPARISON_OP}|{ASSIGNMENT_OP}|{ARITHMETIC_OP}
 
+CHARACTER             \'.\'
 STRING			          \".*\"
 INCOMPLETE_STRING			\"[^\"\n]*
 
@@ -49,11 +50,12 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 {MACRO} 			                { display();  }
 {NUMERIC_CONST}			          { display(); return CONSTANT; }
 
+{CHARACTER}                   { display(); return CHAR_CONST; }
 {STRING}			                { display(); return STRING_LITERAL; }
 {INCOMPLETE_STRING}           { display(); yyerror("<- Error! Incomplete string"); exit(1);}
 
 {SYMBOL}                      { display(); return(yytext[0]);}
-=			                        { display(); return '='; }
+=			                        { display(); return('='); }
 
 "--"	                        { display(); return DEC_OP; }
 "++"                          { display(); return INC_OP; }
@@ -104,7 +106,7 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
 {IDENTIFIER}    		          { display(); yylval.str = strdup(yytext); return IDENTIFIER; }
 [ \t\v\n\f]		                { display(); }
-.			                        { return yytext[0]; }
+.			                        { display(); return yytext[0]; }
 
 %%
 
