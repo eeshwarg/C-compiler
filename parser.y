@@ -17,12 +17,18 @@
 		}
 		return 0;
 	}
+
+	int temp_global = 1;
+
 %}
 
 %union{
-	int ival;
-	char* str;
-	type_e type;
+	struct addr
+	{
+		int ival;
+		char* str;
+		type_e type;
+	}attributes;
 }
 
 %nonassoc NO_ELSE
@@ -41,21 +47,22 @@
 %start translation_unit
 %%
 
-primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<str>1 );
+primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<attributes.str>1 );
 																	if(v == NULL)
 																	{
 																		yyerror("Undeclared identifier!");
 																		/*YYABORT;*/
 																	}
 																	else
-																		$<type>$ = v->type;}
-									| CONSTANT		{$<type>$ = Int;}
-									| CHAR_CONST 	{$<type>$ = Char;}
-									| STRING_LITERAL	{ $<type>$ = Char;}
-									| '(' expression ')' {$<str>$ = $<str>2;}
+																		$<attributes.type>$ = v->type;}
+									| CONSTANT		{$<attributes.type>$ = Int;}
+									| CHAR_CONST 	{$<attributes.type>$ = Char;}
+									| STRING_LITERAL	{ $<attributes.type>$ = Char;}
+									| '(' expression ')' {$<attributes.str>$ = $<attributes.str>2;}
 									;
 
-postfix_expression: primary_expression	{ $<type>$ = $<type>1; }
+postfix_expression: primary_expression	{ $<attributes.type>$ = $<attributes.type>1; }
+									| postfix_expression '[' expression ']'
 									| postfix_expression '(' ')'
 									| postfix_expression '(' argument_expression_list ')'
 									| postfix_expression INC_OP
@@ -66,7 +73,7 @@ argument_expression_list: assignment_expression
 												| argument_expression_list ',' assignment_expression
 												;
 
-unary_expression: postfix_expression  { $<type>$ = $<type>1; }
+unary_expression: postfix_expression  { $<attributes.type>$ = $<attributes.type>1; }
 								| INC_OP unary_expression
 								| DEC_OP unary_expression
 								| unary_operator cast_expression
@@ -80,82 +87,84 @@ unary_operator: '&'
 							| '!'
 							;
 
-cast_expression	: unary_expression { $<type>$ = $<type>1; }
-								| '(' datatype ')' cast_expression { $<type>$ = dtype; }
+cast_expression	: unary_expression { $<attributes.type>$ = $<attributes.type>1; }
+								| '(' datatype ')' cast_expression { $<attributes.type>$ = dtype; }
 								;
 
-multiplicative_expression	: cast_expression { $<type>$ = $<type>1; }
-													| multiplicative_expression '*' cast_expression {if( !type_error($<type>1, $<type>3) )
-													 																										$<type>$ = $<type>1;}
-													| multiplicative_expression '/' cast_expression {if( !type_error($<type>1, $<type>3) )
-													 																										$<type>$ = $<type>1;}
-													| multiplicative_expression '%' cast_expression {if( !type_error($<type>1, $<type>3) )
-													 																										$<type>$ = $<type>1;}
+multiplicative_expression	: cast_expression { $<attributes.type>$ = $<attributes.type>1; }
+													| multiplicative_expression '*' cast_expression	{	if( !type_error($<attributes.type>1, $<attributes.type>3) )
+													 																										$<attributes.type>$ = $<attributes.type>1;
+																																					}
+													| multiplicative_expression '/' cast_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+													 																										$<attributes.type>$ = $<attributes.type>1;}
+													| multiplicative_expression '%' cast_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+													 																										$<attributes.type>$ = $<attributes.type>1;}
 													;
 
-additive_expression	: multiplicative_expression { $<type>$ = $<type>1; }
-										| additive_expression '+' multiplicative_expression	{if( !type_error($<type>1, $<type>3) )
-																																				$<type>$ = $<type>1;}
-										| additive_expression '-' multiplicative_expression	{if( !type_error($<type>1, $<type>3) )
-																																				$<type>$ = $<type>1;}
+additive_expression	: multiplicative_expression { $<attributes.type>$ = $<attributes.type>1; }
+										| additive_expression '+' multiplicative_expression	{	if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																						$<attributes.type>$ = $<attributes.type>1;
+																																				}
+										| additive_expression '-' multiplicative_expression	{if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																				$<attributes.type>$ = $<attributes.type>1;}
 										;
 
-shift_expression: additive_expression { $<type>$ = $<type>1; }
-								| shift_expression LEFT_OP additive_expression	{if( !type_error($<type>1, $<type>3) )
-																																		$<type>$ = $<type>1;}
-								| shift_expression RIGHT_OP additive_expression {if( !type_error($<type>1, $<type>3) )
-																																		$<type>$ = $<type>1;}
+shift_expression: additive_expression { $<attributes.type>$ = $<attributes.type>1; }
+								| shift_expression LEFT_OP additive_expression	{if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																		$<attributes.type>$ = $<attributes.type>1;}
+								| shift_expression RIGHT_OP additive_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																		$<attributes.type>$ = $<attributes.type>1;}
 								;
 
-relational_expression	: shift_expression { $<type>$ = $<type>1; }
-											| relational_expression '<' shift_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
-											| relational_expression '>' shift_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
-											| relational_expression LE_OP shift_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
-											| relational_expression GE_OP shift_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
+relational_expression	: shift_expression { $<attributes.type>$ = $<attributes.type>1; }
+											| relational_expression '<' shift_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
+											| relational_expression '>' shift_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
+											| relational_expression LE_OP shift_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
+											| relational_expression GE_OP shift_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
 											;
 
-equality_expression	: relational_expression { $<type>$ = $<type>1; }
-										| equality_expression EQ_OP relational_expression {if( !type_error($<type>1, $<type>3) )
-																																				$<type>$ = $<type>1;}
-										| equality_expression NE_OP relational_expression {if( !type_error($<type>1, $<type>3) )
-																																				$<type>$ = $<type>1;}
+equality_expression	: relational_expression { $<attributes.type>$ = $<attributes.type>1; }
+										| equality_expression EQ_OP relational_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																				$<attributes.type>$ = $<attributes.type>1;}
+										| equality_expression NE_OP relational_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																				$<attributes.type>$ = $<attributes.type>1;}
 										;
 
-and_expression: equality_expression { $<type>$ = $<type>1; }
-							| and_expression '&' equality_expression {if( !type_error($<type>1, $<type>3) )
-																																	$<type>$ = $<type>1;}
+and_expression: equality_expression { $<attributes.type>$ = $<attributes.type>1; }
+							| and_expression '&' equality_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																	$<attributes.type>$ = $<attributes.type>1;}
 							;
 
-exclusive_or_expression	: and_expression { $<type>$ = $<type>1; }
-												| exclusive_or_expression '^' and_expression {if( !type_error($<type>1, $<type>3) )
-																																						$<type>$ = $<type>1;}
+exclusive_or_expression	: and_expression { $<attributes.type>$ = $<attributes.type>1; }
+												| exclusive_or_expression '^' and_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																						$<attributes.type>$ = $<attributes.type>1;}
 												;
 
-inclusive_or_expression	: exclusive_or_expression { $<type>$ = $<type>1; }
-												| inclusive_or_expression '|' exclusive_or_expression {if( !type_error($<type>1, $<type>3) )
-																																						$<type>$ = $<type>1;}
+inclusive_or_expression	: exclusive_or_expression { $<attributes.type>$ = $<attributes.type>1; }
+												| inclusive_or_expression '|' exclusive_or_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																						$<attributes.type>$ = $<attributes.type>1;}
 												;
 
-logical_and_expression: inclusive_or_expression { $<type>$ = $<type>1; }
-											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
+logical_and_expression: inclusive_or_expression { $<attributes.type>$ = $<attributes.type>1; }
+											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
 											;
 
-logical_or_expression	: logical_and_expression { $<type>$ = $<type>1; }
-											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<type>1, $<type>3) )
-																																					$<type>$ = $<type>1;}
+logical_or_expression	: logical_and_expression { $<attributes.type>$ = $<attributes.type>1; }
+											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<attributes.type>1, $<attributes.type>3) )
+																																					$<attributes.type>$ = $<attributes.type>1;}
 											;
 
-conditional_expression: logical_or_expression { $<type>$ = $<type>1; }
+conditional_expression: logical_or_expression { $<attributes.type>$ = $<attributes.type>1; }
 											| logical_or_expression '?' expression ':' conditional_expression
 											;
 
-assignment_expression	: conditional_expression { $<type>$ = $<type>1; }
-											| unary_expression assignment_operator assignment_expression { type_error($<type>1, $<type>3);}
+assignment_expression	: conditional_expression { $<attributes.type>$ = $<attributes.type>1; }
+											| unary_expression assignment_operator assignment_expression { type_error($<attributes.type>1, $<attributes.type>3);}
 											;
 
 assignment_operator	: '='
@@ -171,7 +180,7 @@ assignment_operator	: '='
 										| OR_ASSIGN
 										;
 
-expression: assignment_expression { $<type>$ = $<type>1; }
+expression: assignment_expression { $<attributes.type>$ = $<attributes.type>1; }
 						| expression ',' assignment_expression
 						;
 
@@ -183,9 +192,9 @@ init_declarator_list: init_declarator
 										;
 
 init_declarator	: declarator
-								| declarator '=' initializer {value_s* v = st.find_id( $<str>1 );
-																								if( !type_error(v->type, $<type>3) )
-																									$<type>$ = $<type>3;}
+								| declarator '=' initializer {value_s* v = st.find_id( $<attributes.str>1 );
+																								if( !type_error(v->type, $<attributes.type>3) )
+																									$<attributes.type>$ = $<attributes.type>3;}
 								;
 
 datatype: VOID 	{dtype = Void;}
@@ -193,20 +202,22 @@ datatype: VOID 	{dtype = Void;}
 				| INT		{dtype = Int;}
 				;
 
-declarator: IDENTIFIER		{	$<str>$ = $<str>1;
+declarator: IDENTIFIER		{	$<attributes.str>$ = $<attributes.str>1;
 														value_s* v = make_value(VAR,dtype,NULL);
-														if( st.save_id( $<str>1 , v ) == 0)
+														if( st.save_id( $<attributes.str>1 , v ) == 0)
 														{
 															yyerror("Variable already declared!");
 															/*YYABORT;*/
 														}
 
 													}
+					| declarator '[' conditional_expression ']'
+					| declarator '[' ']'
 					| '(' declarator ')'
 					| declarator '(' parameter_type_list ')'
 					| declarator '(' identifier_list ')'
 					| declarator '(' ')'	{value_s* v = make_value(FUNC,dtype,NULL);
-																 st.update_id($<str>1, v);}
+																 st.update_id($<attributes.str>1, v);}
 					;
 
 parameter_type_list	: parameter_list
@@ -224,7 +235,7 @@ identifier_list	: IDENTIFIER
 								| identifier_list ',' IDENTIFIER
 								;
 
-initializer	: assignment_expression	{$<type>$ = $<type>1;}
+initializer	: assignment_expression	{$<attributes.type>$ = $<attributes.type>1;}
 						| '{' initializer_list '}'
 						| '{' initializer_list ',' '}'
 						;
