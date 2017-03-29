@@ -238,12 +238,11 @@ statement	: compound_statement
 					| selection_statement
 					| iteration_statement
 					| jump_statement
+					| declaration
 					;
 
 compound_statement: start_scope '{' '}' { st.close_scope(); }
 									| start_scope '{' statement_list '}'	{  st.close_scope(); }
-									| start_scope '{' declaration_list '}' 	{ st.close_scope(); }
-									| start_scope '{' declaration_list statement_list '}' { st.close_scope(); }
 									;
 
 start_scope	:		{ st.new_scope(); }

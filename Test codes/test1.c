@@ -22,6 +22,9 @@ int main()
 	char a,b,c,d='a';
 	b = 't';
 	n++;
+	int eesh;
+	if(b == 't')
+		a = 'a';
 	// printf("Factorial = %d\n",fact);
 
 	return 0;
