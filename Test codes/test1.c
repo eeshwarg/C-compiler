@@ -18,6 +18,10 @@ int main()
 			break;
 		n--;
 	}
+
+	char a,b,c,d='a';
+	b = 't';
+	n++;
 	// printf("Factorial = %d\n",fact);
 
 	return 0;
