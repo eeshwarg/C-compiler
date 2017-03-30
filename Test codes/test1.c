@@ -7,7 +7,7 @@
 int main()
 {
 	//a"hello";
-	int n,fact=1;
+	int i,j,n,fact=1;
 	// printf("Enter an integer:\n");
 	// scanf("%d",&n);
 
@@ -15,9 +15,12 @@ int main()
 	{
 		fact = 10 - n;
 		if (fact < n)
-			break;
+		{
+			n = i + j;
+			i = i * 1;
+		}
 		else
-			continue;
+			fact = 5;
 		n--;
 	}
 
@@ -29,6 +32,12 @@ int main()
 	b = 't';
 	n++;
 	int e;
+
+	do{
+		a = b + c - d * e;
+		if(a > b)
+			c = d * e;
+	}while(n>0);
 
 	// printf("Factorial = %d\n",fact);
 

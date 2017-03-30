@@ -25,8 +25,6 @@
 		return 0;
 	}
 
-	int temp_global = 1;
-
 %}
 
 %union{
@@ -354,16 +352,18 @@ expression_statement: ';'
 										| expression ';'
 										;
 
-selection_statement	: if_expression statement	{ printf("after if %s",$<E->var>2); }		%prec NO_ELSE
-										| if_expression statement ELSE {printf("L%d: ",temp_label_no-1);} statement	{ printf("after else %s",$<E->var>5); } %prec ELSE
+selection_statement	: if_expression statement	{ printf("%s",$<E->var>2); printf("L%d:\n",label_s.top()); label_s.pop(); }		%prec NO_ELSE
+										| if_expression statement ELSE {printf("goto L%d\n",temp_label_no); printf("L%d: ",label_s.top()); label_s.pop(); label_s.push(temp_label_no++); } statement	{ printf("%s",$<E->var>5); printf("L%d:\n",label_s.top()); label_s.pop();  } %prec ELSE
 										;
 
-if_expression : IF '(' expression ')' { printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
+if_expression : IF '(' expression ')' { label_s.push(temp_label_no); printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
 							;
 
-iteration_statement	: WHILE '(' expression ')' statement
-										| DO statement WHILE '(' expression ')' ';'
+iteration_statement	: while_expression statement { printf("%s",$<E->var>2); printf("L%d:\n",label_s.top()); label_s.pop(); }
+										| DO { label_s.push(temp_label_no); printf("L%d:",temp_label_no++); } statement WHILE '(' expression ')' { printf("If True goto L%d\n",label_s.top()); label_s.pop();} ';'
 										;
+
+while_expression:	WHILE '(' expression ')' { label_s.push(temp_label_no); printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
 
 jump_statement: CONTINUE ';'
 							| BREAK ';'
