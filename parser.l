@@ -48,9 +48,9 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 {SINGLE_LINE_COMMENT}					{ /*do nothing*/ }
 {LIBRARY} 		                { display(); }
 {MACRO} 			                { display();  }
-{NUMERIC_CONST}			          { display(); return CONSTANT; }
+{NUMERIC_CONST}			          { display(); yylval.E = newTemp(yytext); yylval.E->type = Int; return CONSTANT; }
 
-{CHARACTER}                   { display(); return CHAR_CONST; }
+{CHARACTER}                   { display(); yylval.E = newTemp(yytext); yylval.E->type = Char; return CHAR_CONST; }
 {STRING}			                { display(); return STRING_LITERAL; }
 {INCOMPLETE_STRING}           { display(); yyerror("<- Error! Incomplete string"); exit(1);}
 

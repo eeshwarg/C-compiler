@@ -30,6 +30,12 @@ public:
     sprintf(inst, "%s = %s %c %s", var, arg1->var, opcode, arg2->var);
     cout << "\t-----" << inst << "-----" << endl;
   }
+
+  void gen(Expr* arg1){
+    char inst[20];
+    sprintf(inst, "%s = %s", var, arg1->var);
+    cout << "\t-----" << inst << "-----" << endl;
+  }
 };
 
 Expr* newTemp(char* lexeme){
