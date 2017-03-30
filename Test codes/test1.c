@@ -20,6 +20,7 @@ int main()
 	}
 
 	char a,b,c,d='a';
+	c = b + d * a;
 	b = 't';
 	n++;
 	int eesh;

@@ -104,7 +104,7 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
 {ARITHMETIC_OP}               { display(); return(yytext[0]);}
 
-{IDENTIFIER}    		          { display(); yylval.attributes.str = strdup(yytext); return IDENTIFIER; }
+{IDENTIFIER}    		          { display(); yylval.E = newTemp(yytext); return IDENTIFIER; }
 [ \t\v\n\f]		                { display(); }
 .			                        { display(); return yytext[0]; }
 

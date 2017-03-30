@@ -1,6 +1,6 @@
 // #include "hashtable.h"
-#include<string>
-
+#include<iostream>
+using namespace std;
 // typedef struct attr_s{
 //   int ival;
 //   char* id_name;
@@ -9,29 +9,27 @@
 // } attr_t;
 
 class Expr {
+public:
   char* var;
   type_e type;
+  Expr(){var = NULL; type = Void;}
 
-  public:
-    Expr(){var = NULL; type = Void;}
+  Expr(char* lexeme){
+    if(lexeme != NULL)
+      var = strdup(lexeme);
+  }
 
-    Expr(char* lexeme){
-      if(lexeme != NULL)
-        var = strdup(lexeme);
-    }
+  Expr(int i){
+    char tindex[4];
+    sprintf(tindex, "t%d", i);
+    var = strdup(tindex);
+  }
 
-    Expr(int i){
-      char* tempvar = "t";
-      char index[3];
-      sprintf(index, "%d", i);
-      var = strcat(tempvar, index);
-    }
-
-    void gen(char opcode, Expr* arg1, Expr* arg2){
-      char inst[20];
-      sprintf(inst, "%s = %s %c %s", var, arg1->var, opcode, arg2->var);
-      printf("%s", inst);
-    }
+  void gen(char opcode, Expr* arg1, Expr* arg2){
+    char inst[20];
+    sprintf(inst, "%s = %s %c %s", var, arg1->var, opcode, arg2->var);
+    cout << "\t-----" << inst << "-----" << endl;
+  }
 };
 
 Expr* newTemp(char* lexeme){
