@@ -25,9 +25,9 @@ public:
     var = strdup(tindex);
   }
 
-  void gen(char opcode, Expr* arg1, Expr* arg2){
+  void gen(char* opcode, Expr* arg1, Expr* arg2){
     char inst[20];
-    sprintf(inst, "%s = %s %c %s", var, arg1->var, opcode, arg2->var);
+    sprintf(inst, "%s = %s %s %s", var, arg1->var, opcode, arg2->var);
     cout << "\t-----" << inst << "-----" << endl;
   }
 };

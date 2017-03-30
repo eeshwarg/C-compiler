@@ -3,6 +3,7 @@
 	#include "symbol_table.cpp"
 	#include "icghelper.cpp"
 	#include<cstdio>
+	#include <stack>
 	using namespace std;
 
 	sym_table st;
@@ -10,6 +11,8 @@
 	token_e dtoken=FUNC;
 
 	int temp_var_no = 1;
+	int temp_label_no = 1;
+	stack<int> label_s;
 
 	int yylex(void);
 	void yyerror(char *);
@@ -96,21 +99,21 @@ multiplicative_expression	: cast_expression { $<E->type>$ = $<E->type>1; }
 													| multiplicative_expression '*' cast_expression	{	if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen('*', $<E>1, $<E>3);
+																																										temp->gen("*", $<E>1, $<E>3);
 																																										$<E>$ = temp;
 																																									}
 																																					}
 													| multiplicative_expression '/' cast_expression {if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen('/', $<E>1, $<E>3);
+																																										temp->gen("/", $<E>1, $<E>3);
 																																										$<E>$ = temp;
 																																									}
 																																					}
 													| multiplicative_expression '%' cast_expression { if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen('%', $<E>1, $<E>3);
+																																										temp->gen("%", $<E>1, $<E>3);
 																																										$<E>$ = temp;
 																																									}
 																																					}
@@ -120,14 +123,14 @@ additive_expression	: multiplicative_expression { $<E->type>$ = $<E->type>1; }
 										| additive_expression '+' multiplicative_expression	{	if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen('+', $<E>1, $<E>3);
+																																							temp->gen("+", $<E>1, $<E>3);
 																																							$<E>$ = temp;
 																																						}
 																																				}
 										| additive_expression '-' multiplicative_expression	{if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen('-', $<E>1, $<E>3);
+																																							temp->gen("-", $<E>1, $<E>3);
 																																							$<E>$ = temp;
 																																						}
 																																					}
@@ -141,46 +144,101 @@ shift_expression: additive_expression { $<E->type>$ = $<E->type>1; }
 								;
 
 relational_expression	: shift_expression { $<E->type>$ = $<E->type>1; }
-											| relational_expression '<' shift_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
-											| relational_expression '>' shift_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
-											| relational_expression LE_OP shift_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
-											| relational_expression GE_OP shift_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
+											| relational_expression '<' shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																								Expr* temp = newTemp(temp_var_no++);
+																																								temp->type = $<E->type>1;
+																																								temp->gen("<", $<E>1, $<E>3);
+																																								$<E>$ = temp;
+																																			}
+																																		}
+											| relational_expression '>' shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																								Expr* temp = newTemp(temp_var_no++);
+																																								temp->type = $<E->type>1;
+																																								temp->gen(">", $<E>1, $<E>3);
+																																								$<E>$ = temp;
+																																			}
+																																		}
+											| relational_expression LE_OP shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																								Expr* temp = newTemp(temp_var_no++);
+																																								temp->type = $<E->type>1;
+																																								temp->gen("<=", $<E>1, $<E>3);
+																																								$<E>$ = temp;
+																																				}
+																																			}
+											| relational_expression GE_OP shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																								Expr* temp = newTemp(temp_var_no++);
+																																								temp->type = $<E->type>1;
+																																								temp->gen(">=", $<E>1, $<E>3);
+																																								$<E>$ = temp;
+																																				}
+																																			}
 											;
 
 equality_expression	: relational_expression { $<E->type>$ = $<E->type>1; }
-										| equality_expression EQ_OP relational_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																				$<E->type>$ = $<E->type>1;}
-										| equality_expression NE_OP relational_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																				$<E->type>$ = $<E->type>1;}
+										| equality_expression EQ_OP relational_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																							Expr* temp = newTemp(temp_var_no++);
+																																							temp->type = $<E->type>1;
+																																							temp->gen("==", $<E>1, $<E>3);
+																																							$<E>$ = temp;
+																																				}
+																																			}
+										| equality_expression NE_OP relational_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																							Expr* temp = newTemp(temp_var_no++);
+																																							temp->type = $<E->type>1;
+																																							temp->gen("!=", $<E>1, $<E>3);
+																																							$<E>$ = temp;
+																																				}
+																																			}
 										;
 
 and_expression: equality_expression { $<E->type>$ = $<E->type>1; }
-							| and_expression '&' equality_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																	$<E->type>$ = $<E->type>1;}
+							| and_expression '&' equality_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																				Expr* temp = newTemp(temp_var_no++);
+																																				temp->type = $<E->type>1;
+																																				temp->gen("&", $<E>1, $<E>3);
+																																				$<E>$ = temp;
+																													}
+																												}
 							;
 
 exclusive_or_expression	: and_expression { $<E->type>$ = $<E->type>1; }
-												| exclusive_or_expression '^' and_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																						$<E->type>$ = $<E->type>1;}
+												| exclusive_or_expression '^' and_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																									Expr* temp = newTemp(temp_var_no++);
+																																									temp->type = $<E->type>1;
+																																									temp->gen("^", $<E>1, $<E>3);
+																																									$<E>$ = temp;
+																																				}
+																																			}
 												;
 
 inclusive_or_expression	: exclusive_or_expression { $<E->type>$ = $<E->type>1; }
-												| inclusive_or_expression '|' exclusive_or_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																						$<E->type>$ = $<E->type>1;}
+												| inclusive_or_expression '|' exclusive_or_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
+																																									Expr* temp = newTemp(temp_var_no++);
+																																									temp->type = $<E->type>1;
+																																									temp->gen("|", $<E>1, $<E>3);
+																																									$<E>$ = temp;
+																																								}
+																																							}
 												;
 
 logical_and_expression: inclusive_or_expression { $<E->type>$ = $<E->type>1; }
-											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
+											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<E->type>1, $<E->type>3) ){
+																																									Expr* temp = newTemp(temp_var_no++);
+																																									temp->type = $<E->type>1;
+																																									temp->gen("&&", $<E>1, $<E>3);
+																																									$<E>$ = temp;
+																																								}
+																																							}
 											;
 
 logical_or_expression	: logical_and_expression { $<E->type>$ = $<E->type>1; }
-											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<E->type>1, $<E->type>3) )
-																																					$<E->type>$ = $<E->type>1;}
+											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<E->type>1, $<E->type>3) ){
+																																								Expr* temp = newTemp(temp_var_no++);
+																																								temp->type = $<E->type>1;
+																																								temp->gen("||", $<E>1, $<E>3);
+																																								$<E>$ = temp;
+																																							}
+																																						}
 											;
 
 conditional_expression: logical_or_expression { $<E->type>$ = $<E->type>1; }
@@ -296,9 +354,12 @@ expression_statement: ';'
 										| expression ';'
 										;
 
-selection_statement	: IF '(' expression ')' statement									%prec NO_ELSE
-										| IF '(' expression ')' statement ELSE statement
+selection_statement	: if_expression statement	{ printf("after if %s",$<E->var>2); }		%prec NO_ELSE
+										| if_expression statement ELSE {printf("L%d: ",temp_label_no-1);} statement	{ printf("after else %s",$<E->var>5); } %prec ELSE
 										;
+
+if_expression : IF '(' expression ')' { printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
+							;
 
 iteration_statement	: WHILE '(' expression ')' statement
 										| DO statement WHILE '(' expression ')' ';'

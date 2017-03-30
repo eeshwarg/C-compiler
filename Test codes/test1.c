@@ -14,18 +14,22 @@ int main()
 	while(n>0)//Until n becomes zero
 	{
 		fact = 10 - n;
-		if (fact < 0)
+		if (fact < n)
 			break;
+		else
+			continue;
 		n--;
 	}
 
 	char a,b,c,d='a';
+	if(b<'t')
+		a = 'a';
+
 	c = b + d * a;
 	b = 't';
 	n++;
-	int eesh;
-	if(b == 't')
-		a = 'a';
+	int e;
+
 	// printf("Factorial = %d\n",fact);
 
 	return 0;
