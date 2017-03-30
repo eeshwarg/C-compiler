@@ -1,5 +1,7 @@
 %{
+	#include "hashtable.h"
 	#include "symbol_table.cpp"
+	#include "icghelper.cpp"
 	#include<cstdio>
 	using namespace std;
 
@@ -29,6 +31,7 @@
 		char* str;
 		type_e type;
 	}attributes;
+	Expr* E;
 }
 
 %nonassoc NO_ELSE
