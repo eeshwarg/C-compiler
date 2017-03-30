@@ -25,28 +25,28 @@ public:
     var = strdup(tindex);
   }
 
-  void gen(char opcode, Expr* arg1, Expr* arg2){
+  void gen(char* opcode, Expr* arg1, Expr* arg2){
     char inst[20];
-    sprintf(inst, "%s = %s %c %s", var, arg1->var, opcode, arg2->var);
-    cout << "\t-----" << inst << "-----" << endl;
+    sprintf(inst, "%s = %s %s %s", var, arg1->var, opcode, arg2->var);
+    cout << "\n-----" << inst << "-----" << endl;
   }
 
   void gen(Expr* arg1){
     char inst[20];
     sprintf(inst, "%s = %s", var, arg1->var);
-    cout << "\t-----" << inst << "-----" << endl;
+    cout << "\n-----" << inst << "-----" << endl;
   }
 
   void param(){
     char inst[20];
     sprintf(inst, "param %s", var);
-    cout << "\t-----" << inst << "-----" << endl;
+    cout << "\n-----" << inst << "-----" << endl;
   }
 
   void call(Expr* proc, int n){
     char inst[20];
     sprintf(inst, "%s = call %s, %d", var, proc->var, n);
-    cout << "\t-----" << inst << "-----" << endl;
+    cout << "\n-----" << inst << "-----" << endl;
   }
 };
 
