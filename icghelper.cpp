@@ -28,25 +28,35 @@ public:
   void gen(char* opcode, Expr* arg1, Expr* arg2){
     char inst[20];
     sprintf(inst, "%s = %s %s %s", var, arg1->var, opcode, arg2->var);
-    cout << "\n-----" << inst << "-----" << endl;
+    cout << inst << endl;
   }
 
   void gen(Expr* arg1){
     char inst[20];
     sprintf(inst, "%s = %s", var, arg1->var);
-    cout << "\n-----" << inst << "-----" << endl;
+    cout << inst << endl;
+  }
+
+  void gen(Expr* id, Expr* index, char* size){
+    char inst[20];
+    sprintf(inst, "%s = %s + %s * %s", var, id->var, index->var, size);
+    cout << inst << endl;
   }
 
   void param(){
     char inst[20];
     sprintf(inst, "param %s", var);
-    cout << "\n-----" << inst << "-----" << endl;
+    cout << inst << endl;
   }
 
   void call(Expr* proc, int n){
     char inst[20];
     sprintf(inst, "%s = call %s, %d", var, proc->var, n);
-    cout << "\n-----" << inst << "-----" << endl;
+    cout << inst << endl;
+  }
+
+  void set_array(Expr* id, Expr* index){
+    sprintf(var, "%s[%s]", id->var, index->var);
   }
 };
 

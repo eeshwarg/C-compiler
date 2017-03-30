@@ -8,7 +8,6 @@
 
 	sym_table st;
 	type_e dtype, ntype;
-	token_e dtoken=FUNC;
 
 	int temp_var_no = 1;
 	int param_no;
@@ -70,7 +69,20 @@ primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<E->var>1 );
 									;
 
 postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
-									| postfix_expression '[' expression ']'
+									| postfix_expression '[' expression ']' {	Expr* tempvar = newTemp(temp_var_no++);
+																														tempvar->type = $<E->type>3;
+																														Expr* temp = $<E>1;
+																														Expr* constant;
+																														if(temp->type == Int)
+																															constant = newTemp("4");
+																														else if(temp->type == Char)
+																															constant = newTemp("1");
+																														tempvar->gen("*", $<E>3, constant);
+																														temp->set_array($<E>1,tempvar);
+
+																														/*temp->gen($<E>1, $<E>3, "4");*/
+																														$<E>$ = temp;
+																													}
 									| postfix_expression '(' ')' {	Expr* temp=newTemp(temp_var_no++);
 																									temp->type = $<E->type>1;
 																									temp->call($<E>1, 0);
@@ -320,6 +332,7 @@ expression: assignment_expression { $<E>$ = $<E>1;
 																			else if(postfix_operator == DEC_OP)
 																				tempvar->gen("-", postfix_id, constant);
 																			postfix_id->gen(tempvar);
+																			postfix = false;
 																			}
 																	}
 						| expression ',' assignment_expression
@@ -364,13 +377,18 @@ declarator: IDENTIFIER		{	$<E>$ = $<E>1;
 					| '(' declarator ')'
 					| declarator '(' parameter_type_list ')' { value_s* v = make_value(FUNC,dtype,NULL);
 																 										 st.update_id($<E->var>1, v);
+																										 $<E>$ = $<E>1;
+																										 printf("func begin %s\n", $<E->var>$);
 																									 }
 					| declarator '(' identifier_list ')' 		{	value_s* v = make_value(FUNC,dtype,NULL);
 																 										st.update_id($<E->var>1, v);
-
+																										$<E>$ = $<E>1;
+																										printf("func begin %s\n", $<E->var>$);
 																									}
 					| declarator '(' ')'										{	value_s* v = make_value(FUNC,dtype,NULL);
 																 										st.update_id($<E->var>1, v);
+																										$<E>$ = $<E>1;
+																										printf("func begin %s\n", $<E->var>$);
 																									}
 					;
 
@@ -426,37 +444,61 @@ expression_statement: ';'
 										| expression ';'
 										;
 
-selection_statement	: if_expression statement	{ printf("%s",$<E->var>2); printf("L%d:\n",label_s.top()); label_s.pop(); }		%prec NO_ELSE
-										| if_expression statement ELSE {printf("goto L%d\n",temp_label_no); printf("L%d: ",label_s.top()); label_s.pop(); label_s.push(temp_label_no++); } statement	{ printf("%s",$<E->var>5); printf("L%d:\n",label_s.top()); label_s.pop();  } %prec ELSE
+selection_statement	: if_expression statement	{ //printf("%s",$<E->var>2);
+																								printf("L%d:\n",label_s.top());
+																								label_s.pop();
+																							 }		%prec NO_ELSE
+										| if_expression statement ELSE {	printf("goto L%d\n",temp_label_no);
+																											printf("L%d:\n",label_s.top());
+																											label_s.pop();
+																											label_s.push(temp_label_no++);
+																									 } statement	{ //printf("%s",$<E->var>5);
+																									 								printf("L%d:\n",label_s.top());
+																																	label_s.pop();
+																																} %prec ELSE
 										;
 
-if_expression : IF '(' expression ')' { label_s.push(temp_label_no); printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
+if_expression : IF '(' expression ')' { label_s.push(temp_label_no);
+																				printf("ifFalse %s goto L%d\n",$<E->var>3,temp_label_no++);
+																		 	}
 							;
 
-iteration_statement	: while_expression statement { printf("%s",$<E->var>2); printf("L%d:\n",label_s.top()); label_s.pop(); }
-										| DO { label_s.push(temp_label_no); printf("L%d:",temp_label_no++); } statement WHILE '(' expression ')' { printf("If True goto L%d\n",label_s.top()); label_s.pop();} ';'
+iteration_statement	: while_expression statement { //printf("%s",$<E->var>2);
+																									 printf("L%d:\n",label_s.top());
+																									 label_s.pop();
+																								  }
+										| DO 			{ label_s.push(temp_label_no);
+																printf("L%d:\n",temp_label_no++);
+															} statement WHILE '(' expression ')' { printf("if %s goto L%d\n",$<E->var>6, label_s.top());
+																																			label_s.pop();
+																																		} ';'
 										;
 
-while_expression:	WHILE '(' expression ')' { label_s.push(temp_label_no); printf("If False %s then goto L%d",$<E->var>3,temp_label_no++); }
+while_expression:	WHILE '(' expression ')' { label_s.push(temp_label_no);
+																						printf("ifFalse %s goto L%d\n",$<E->var>3,temp_label_no++);
+																					 }
 
 jump_statement: CONTINUE ';'
 							| BREAK ';'
-							| RETURN ';'
-							| RETURN expression ';'
+							| RETURN ';'	{printf("return\n");}
+							| RETURN expression ';' {printf("return %s\n", $<E->var>2);}
 							;
 
 translation_unit: external_declaration
 								| translation_unit external_declaration
 								;
 
-external_declaration: function_definition
+external_declaration: function_definition {printf("func end\n\n");}
 										| declaration
 										;
 
-function_definition	: datatype declarator declaration_list compound_statement
-										| datatype declarator compound_statement
-										| declarator declaration_list compound_statement
-										| declarator compound_statement
+/*function_begin: {printf("func begin %s\n", func_name);}
+							;*/
+
+function_definition	: datatype declarator declaration_list compound_statement	{$<E>$ = $<E>2;}
+										| datatype declarator compound_statement									{$<E>$ = $<E>2;}
+										| declarator declaration_list compound_statement					{$<E>$ = $<E>1;}
+										| declarator compound_statement														{$<E>$ = $<E>1;}
 										;
 
 %%

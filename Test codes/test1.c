@@ -18,6 +18,7 @@ int main()
 		{
 			n = i + j;
 			i = i * 1;
+			break;
 		}
 		else
 			fact = 5;
@@ -36,10 +37,13 @@ int main()
 
 	do{
 		a = b + c - d * e;
+		break;
 		if(a > b)
 			c = d * e;
 	}while(n>0);
 
+	int arr[5];
+	j = arr[i] + fact * i;
 	// printf("Factorial = %d\n",fact);
 
 	return 0;

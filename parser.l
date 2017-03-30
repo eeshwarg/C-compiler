@@ -115,7 +115,7 @@ int yywrap(){
 }
 
 void display(){
-	ECHO;
+	/*ECHO;*/
 }
 
 void count_comment(char* s){
