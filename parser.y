@@ -10,6 +10,7 @@
 	token_e dtoken=FUNC;
 
 	int temp_var_no = 1;
+	int param_no;
 
 	int yylex(void);
 	void yyerror(char *);
@@ -56,8 +57,7 @@ primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<E->var>1 );
 																		$<E->type>$ = v->type;
 																		/*printf("[Type(%s)=%s]", $<E->var>$, ($<E->type>$==Int?"int":"char"));*/
 																	}
-
-																	}
+																}
 									| CONSTANT		{$<E>$ = $<E>1;}
 									| CHAR_CONST 	{$<E>$ = $<E>1;}
 									| STRING_LITERAL	{ $<E->type>$ = Char;}
@@ -66,8 +66,17 @@ primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<E->var>1 );
 
 postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
 									| postfix_expression '[' expression ']'
-									| postfix_expression '(' ')'
-									| postfix_expression '(' argument_expression_list ')'
+									| postfix_expression '(' ')' {	Expr* temp=newTemp(temp_var_no++);
+																									temp->type = $<E->type>1;
+																									temp->call($<E>1, 0);
+																									$<E>$ = temp;
+																								}
+									| postfix_expression '(' {param_no = 0;} argument_expression_list ')' {	Expr* temp=newTemp(temp_var_no++);
+																																					temp->type = $<E->type>1;
+																																					temp->call($<E>1, param_no);
+																																					param_no = 0;
+																																					$<E>$ = temp;
+																																				}
 									| postfix_expression INC_OP {	Expr* constant = newTemp("1");
 																								Expr* tempvar = newTemp(temp_var_no++);
 																								tempvar->type = constant->type = $<E->type>1;
@@ -86,8 +95,16 @@ postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
 																								}
 									;
 
-argument_expression_list: assignment_expression
-												| argument_expression_list ',' assignment_expression
+argument_expression_list: assignment_expression {	$<E>$ = $<E>1;
+																									Expr* temp = $<E>$;
+																									temp->param();
+																									param_no++;
+																								}
+												| argument_expression_list ',' assignment_expression {	$<E>$ = $<E>3;
+																																								Expr* temp = $<E>$;
+																																								temp->param();
+																																								param_no++;
+																																							}
 												;
 
 unary_expression: postfix_expression  { $<E>$ = $<E>1; }
@@ -239,8 +256,10 @@ init_declarator_list: init_declarator
 init_declarator	: declarator
 								| declarator '=' initializer {value_s* v = st.find_id( $<E->var>1 );
 																								if( !type_error(v->type, $<E->type>3) ){
-																										$<E>$ = $<E>3;
+																										$<E>$ = $<E>1;
 																										$<E->type>$ = v->type;
+																										Expr* temp = $<E>$;
+																										temp->gen($<E>3);
 																								}
 																							}
 								;
@@ -264,10 +283,16 @@ declarator: IDENTIFIER		{	$<E>$ = $<E>1;
 					| declarator '[' conditional_expression ']'
 					| declarator '[' ']'
 					| '(' declarator ')'
-					| declarator '(' parameter_type_list ')'
-					| declarator '(' identifier_list ')'
-					| declarator '(' ')'	{value_s* v = make_value(FUNC,dtype,NULL);
-																 st.update_id($<E->var>1, v);}
+					| declarator '(' parameter_type_list ')' { value_s* v = make_value(FUNC,dtype,NULL);
+																 										 st.update_id($<E->var>1, v);
+																									 }
+					| declarator '(' identifier_list ')' 		{	value_s* v = make_value(FUNC,dtype,NULL);
+																 										st.update_id($<E->var>1, v);
+
+																									}
+					| declarator '(' ')'										{	value_s* v = make_value(FUNC,dtype,NULL);
+																 										st.update_id($<E->var>1, v);
+																									}
 					;
 
 parameter_type_list	: parameter_list

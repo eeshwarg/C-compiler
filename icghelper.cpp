@@ -36,6 +36,18 @@ public:
     sprintf(inst, "%s = %s", var, arg1->var);
     cout << "\t-----" << inst << "-----" << endl;
   }
+
+  void param(){
+    char inst[20];
+    sprintf(inst, "param %s", var);
+    cout << "\t-----" << inst << "-----" << endl;
+  }
+
+  void call(Expr* proc, int n){
+    char inst[20];
+    sprintf(inst, "%s = call %s, %d", var, proc->var, n);
+    cout << "\t-----" << inst << "-----" << endl;
+  }
 };
 
 Expr* newTemp(char* lexeme){
