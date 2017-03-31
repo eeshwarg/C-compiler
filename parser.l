@@ -1,8 +1,6 @@
 %{
   #include <stdio.h>
   #include "y.tab.h"
-
-  void display();
   void count_comment(char* s);
 %}
 
@@ -43,70 +41,70 @@ SYMBOL                "("|")"|"{"|"}"|";"|":"|","|"["|"]"
 
 %%
 
-{NEWLINE}   		              { yylineno++;display();}
+{NEWLINE}   		              { yylineno++;}
 {MULTI_LINE_COMMENT}					{ count_comment(yytext); }
-{SINGLE_LINE_COMMENT}					{ /*do nothing*/ }
-{LIBRARY} 		                { display(); }
-{MACRO} 			                { display();  }
-{NUMERIC_CONST}			          { display(); yylval.E = newTemp(yytext); yylval.E->type = Int; return CONSTANT; }
+{SINGLE_LINE_COMMENT}
+{LIBRARY}
+{MACRO}
+{NUMERIC_CONST}			          { yylval.E = newTemp(yytext); yylval.E->type = Int; return CONSTANT; }
 
-{CHARACTER}                   { display(); yylval.E = newTemp(yytext); yylval.E->type = Char; return CHAR_CONST; }
-{STRING}			                { display(); return STRING_LITERAL; }
-{INCOMPLETE_STRING}           { display(); yyerror("<- Error! Incomplete string"); exit(1);}
+{CHARACTER}                   { yylval.E = newTemp(yytext); yylval.E->type = Char; return CHAR_CONST; }
+{STRING}			                { return STRING_LITERAL; }
+{INCOMPLETE_STRING}           { yyerror("<- Error! Incomplete string"); exit(1);}
 
-{SYMBOL}                      { display(); return(yytext[0]);}
-=			                        { display(); return('='); }
+{SYMBOL}                      { return(yytext[0]);}
+=			                        { return('='); }
 
-"--"	                        { display(); return DEC_OP; }
-"++"                          { display(); return INC_OP; }
-"<<"    	                    { display(); return LEFT_OP; }
-">>"                          { display(); return RIGHT_OP; }
-"<="    	                    { display(); return LE_OP; }
-">="    	                    { display(); return GE_OP; }
-"=="                          { display(); return EQ_OP; }
-"!="	                        { display(); return NE_OP; }
+"--"	                        { return DEC_OP; }
+"++"                          { return INC_OP; }
+"<<"    	                    { return LEFT_OP; }
+">>"                          { return RIGHT_OP; }
+"<="    	                    { return LE_OP; }
+">="    	                    { return GE_OP; }
+"=="                          { return EQ_OP; }
+"!="	                        { return NE_OP; }
 
-"&&"			                    { display(); return AND_OP; }
-"||"			                    { display(); return OR_OP; }
+"&&"			                    { return AND_OP; }
+"||"			                    { return OR_OP; }
 
-"*="                          { display(); return MUL_ASSIGN; }
-"/="                          { display(); return DIV_ASSIGN; }
-"%="                          { display(); return MOD_ASSIGN; }
-"+="                          { display(); return ADD_ASSIGN; }
-"-="                          { display(); return SUB_ASSIGN; }
-"<<="                         { display(); return LEFT_ASSIGN; }
-">>="                         { display(); return RIGHT_ASSIGN; }
-"&="                          { display(); return AND_ASSIGN; }
-"^="                          { display(); return XOR_ASSIGN; }
-"|="                        	{ display(); return OR_ASSIGN; }
-
-
-"char"			                  { display(); return CHAR; }
-"int"			                    { display(); return INT; }
-"void"			                  { display(); return VOID; }
-
-"if"				                  { display(); return IF; }
-"else"			                  { display(); return ELSE; }
-
-"while"			                  { display(); return WHILE; }
-"do"			                    { display(); return DO; }
-
-"continue"		                { display(); return CONTINUE; }
-"break"			                  { display(); return BREAK; }
+"*="                          { return MUL_ASSIGN; }
+"/="                          { return DIV_ASSIGN; }
+"%="                          { return MOD_ASSIGN; }
+"+="                          { return ADD_ASSIGN; }
+"-="                          { return SUB_ASSIGN; }
+"<<="                         { return LEFT_ASSIGN; }
+">>="                         { return RIGHT_ASSIGN; }
+"&="                          { return AND_ASSIGN; }
+"^="                          { return XOR_ASSIGN; }
+"|="                        	{ return OR_ASSIGN; }
 
 
-"return"		                  { display(); return RETURN; }
+"char"			                  { return CHAR; }
+"int"			                    { return INT; }
+"void"			                  { return VOID; }
+
+"if"				                  { return IF; }
+"else"			                  { return ELSE; }
+
+"while"			                  { return WHILE; }
+"do"			                    { return DO; }
+
+"continue"		                { return CONTINUE; }
+"break"			                  { return BREAK; }
+
+
+"return"		                  { return RETURN; }
 
 
 
 
-"."			                      { display(); return('.'); }
+"."			                      { return('.'); }
 
-{ARITHMETIC_OP}               { display(); return(yytext[0]);}
+{ARITHMETIC_OP}               { return(yytext[0]);}
 
-{IDENTIFIER}    		          { display(); yylval.E = newTemp(yytext); return IDENTIFIER; }
-[ \t\v\n\f]		                { display(); }
-.			                        { display(); return yytext[0]; }
+{IDENTIFIER}    		          { yylval.E = newTemp(yytext); return IDENTIFIER; }
+[ \t\v\n\f]
+.			                        { return yytext[0]; }
 
 %%
 
@@ -114,10 +112,7 @@ int yywrap(){
 	return(1);
 }
 
-void display(){
-	/*ECHO;*/
-}
-
+//counts the nummber of lines passed in a multi-line comment to ensure line integrity for error checking
 void count_comment(char* s){
   int i;
   for(i=0; s[i]!= '\0'; i++)

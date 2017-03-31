@@ -94,6 +94,12 @@ postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
 																																					param_no = 0;
 																																					$<E>$ = temp;
 																																				}
+									/*
+										For postfix increment and decrement, the variable is stored in a temp object called "postfix_id".
+										The operator used is also stored in "postfix_operator".
+										Once this is done, the flag "postfix" is set to true.
+										This flag is then checked in the production of expression, which is the root of the entire subtree of expressions.
+									*/
 									| postfix_expression INC_OP {	$<E>$ = $<E>1;
 																								postfix_id = $<E>$;
 																								postfix_operator = INC_OP;
@@ -147,28 +153,30 @@ unary_operator: '&'
 							;
 
 cast_expression	: unary_expression { $<E>$ = $<E>1; }
-								| '(' datatype ')' cast_expression { $<E>$ = $<E>4; $<E->type>$ = dtype; }
+								| '(' datatype ')' cast_expression { $<E>$ = $<E>4;
+																										$<E->type>$ = dtype; //changing type to new datatype, which is then propagated upwards
+																									}
 								;
 
 multiplicative_expression	: cast_expression { $<E>$ = $<E>1; }
 													| multiplicative_expression '*' cast_expression	{	if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen("*", $<E>1, $<E>3);
+																																										temp->gen("*", $<E>1, $<E>3); //generate 3-addr multiplication code
 																																										$<E>$ = temp;
 																																									}
 																																					}
 													| multiplicative_expression '/' cast_expression {if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen("/", $<E>1, $<E>3);
+																																										temp->gen("/", $<E>1, $<E>3); //generate 3-addr division code
 																																										$<E>$ = temp;
 																																									}
 																																					}
 													| multiplicative_expression '%' cast_expression { if( !type_error($<E->type>1, $<E->type>3) ){
 																																										Expr* temp = newTemp(temp_var_no++);
 																																										temp->type = $<E->type>1;
-																																										temp->gen("%", $<E>1, $<E>3);
+																																										temp->gen("%", $<E>1, $<E>3); //generate 3-addr mod code
 																																										$<E>$ = temp;
 																																									}
 																																					}
@@ -178,14 +186,14 @@ additive_expression	: multiplicative_expression { $<E>$ = $<E>1; }
 										| additive_expression '+' multiplicative_expression	{	if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen("+", $<E>1, $<E>3);
+																																							temp->gen("+", $<E>1, $<E>3); //generate 3-addr addition code
 																																							$<E>$ = temp;
 																																						}
 																																				}
 										| additive_expression '-' multiplicative_expression	{if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen("-", $<E>1, $<E>3);
+																																							temp->gen("-", $<E>1, $<E>3); //generate 3-addr subtraction code
 																																							$<E>$ = temp;
 																																						}
 																																					}
@@ -202,28 +210,28 @@ relational_expression	: shift_expression { $<E->type>$ = $<E->type>1; }
 											| relational_expression '<' shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																								Expr* temp = newTemp(temp_var_no++);
 																																								temp->type = $<E->type>1;
-																																								temp->gen("<", $<E>1, $<E>3);
+																																								temp->gen("<", $<E>1, $<E>3); //generate 3-addr relop-L code
 																																								$<E>$ = temp;
 																																			}
 																																		}
 											| relational_expression '>' shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																								Expr* temp = newTemp(temp_var_no++);
 																																								temp->type = $<E->type>1;
-																																								temp->gen(">", $<E>1, $<E>3);
+																																								temp->gen(">", $<E>1, $<E>3); //generate 3-addr relop-G code
 																																								$<E>$ = temp;
 																																			}
 																																		}
 											| relational_expression LE_OP shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																								Expr* temp = newTemp(temp_var_no++);
 																																								temp->type = $<E->type>1;
-																																								temp->gen("<=", $<E>1, $<E>3);
+																																								temp->gen("<=", $<E>1, $<E>3); //generate 3-addr relop-LE code
 																																								$<E>$ = temp;
 																																				}
 																																			}
 											| relational_expression GE_OP shift_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																								Expr* temp = newTemp(temp_var_no++);
 																																								temp->type = $<E->type>1;
-																																								temp->gen(">=", $<E>1, $<E>3);
+																																								temp->gen(">=", $<E>1, $<E>3); //generate 3-addr relop-GE code
 																																								$<E>$ = temp;
 																																				}
 																																			}
@@ -233,14 +241,14 @@ equality_expression	: relational_expression { $<E->type>$ = $<E->type>1; }
 										| equality_expression EQ_OP relational_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen("==", $<E>1, $<E>3);
+																																							temp->gen("==", $<E>1, $<E>3); //generate 3-addr relop-EQ code
 																																							$<E>$ = temp;
 																																				}
 																																			}
 										| equality_expression NE_OP relational_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																							Expr* temp = newTemp(temp_var_no++);
 																																							temp->type = $<E->type>1;
-																																							temp->gen("!=", $<E>1, $<E>3);
+																																							temp->gen("!=", $<E>1, $<E>3); //generate 3-addr relop-NE code
 																																							$<E>$ = temp;
 																																				}
 																																			}
@@ -250,7 +258,7 @@ and_expression: equality_expression { $<E->type>$ = $<E->type>1; }
 							| and_expression '&' equality_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																				Expr* temp = newTemp(temp_var_no++);
 																																				temp->type = $<E->type>1;
-																																				temp->gen("&", $<E>1, $<E>3);
+																																				temp->gen("&", $<E>1, $<E>3); //generate 3-addr bitwise-AND code
 																																				$<E>$ = temp;
 																													}
 																												}
@@ -260,7 +268,7 @@ exclusive_or_expression	: and_expression { $<E->type>$ = $<E->type>1; }
 												| exclusive_or_expression '^' and_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																									Expr* temp = newTemp(temp_var_no++);
 																																									temp->type = $<E->type>1;
-																																									temp->gen("^", $<E>1, $<E>3);
+																																									temp->gen("^", $<E>1, $<E>3);  //generate 3-addr exclusive-OR code
 																																									$<E>$ = temp;
 																																				}
 																																			}
@@ -270,7 +278,7 @@ inclusive_or_expression	: exclusive_or_expression { $<E->type>$ = $<E->type>1; }
 												| inclusive_or_expression '|' exclusive_or_expression {	if( !type_error($<E->type>1, $<E->type>3) ){
 																																									Expr* temp = newTemp(temp_var_no++);
 																																									temp->type = $<E->type>1;
-																																									temp->gen("|", $<E>1, $<E>3);
+																																									temp->gen("|", $<E>1, $<E>3);  //generate 3-addr inclusive-OR code
 																																									$<E>$ = temp;
 																																								}
 																																							}
@@ -280,7 +288,7 @@ logical_and_expression: inclusive_or_expression { $<E->type>$ = $<E->type>1; }
 											| logical_and_expression AND_OP inclusive_or_expression {if( !type_error($<E->type>1, $<E->type>3) ){
 																																									Expr* temp = newTemp(temp_var_no++);
 																																									temp->type = $<E->type>1;
-																																									temp->gen("&&", $<E>1, $<E>3);
+																																									temp->gen("&&", $<E>1, $<E>3); //generate 3-addr AND code
 																																									$<E>$ = temp;
 																																								}
 																																							}
@@ -290,7 +298,7 @@ logical_or_expression	: logical_and_expression { $<E->type>$ = $<E->type>1; }
 											| logical_or_expression OR_OP logical_and_expression {if( !type_error($<E->type>1, $<E->type>3) ){
 																																								Expr* temp = newTemp(temp_var_no++);
 																																								temp->type = $<E->type>1;
-																																								temp->gen("||", $<E>1, $<E>3);
+																																								temp->gen("||", $<E>1, $<E>3); //generate 3-addr OR code
 																																								$<E>$ = temp;
 																																							}
 																																						}
@@ -304,7 +312,7 @@ assignment_expression	: conditional_expression { $<E>$ = $<E>1; }
 											| unary_expression assignment_operator assignment_expression { if(!type_error($<E->type>1, $<E->type>3)){
 																																												$<E>$ = $<E>1;
 																																												Expr* temp = $<E>$;
-																																												temp->gen($<E>3);
+																																												temp->gen($<E>3); //generate assignment instruction
 																																											};
 																																										}
 											;
@@ -324,6 +332,7 @@ assignment_operator	: '='
 
 expression: assignment_expression { $<E>$ = $<E>1;
 																		if(postfix){
+																			//if postfix flag is set, the instructions for postfix increment and decrement need to be generated here.
 																			Expr* constant = newTemp("1");
 																			Expr* tempvar = newTemp(temp_var_no++);
 																			tempvar->type = postfix_id->type;
