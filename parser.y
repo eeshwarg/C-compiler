@@ -6,17 +6,17 @@
 	#include <stack>
 	using namespace std;
 
-	sym_table st;
-	type_e dtype, ntype;
+	sym_table st;				// The symbol table
+	type_e dtype;				// Specifies the datatype of an identifier
 
-	int temp_var_no = 1;
-	int param_no;
-	int temp_label_no = 1;
-	stack<int> label_s;
+	int temp_var_no = 1;		// A global variable that is used to create temporary variables in ICG
+	int param_no;						// Used to count number of parameters passed to a function
+	int temp_label_no = 1;	// A global variable to hold label numbers
+	stack<int> label_s;			// A stack which is used to correctly print labels
 
-	Expr* postfix_id;
-	int postfix_operator;
-	bool postfix=false;
+	Expr* postfix_id;				// An object reference that holds the variable to be incremented/decremented (unary) after its present value is used in the expression in which it is used
+	int postfix_operator;		// Holds the type of unary operator (-- or ++)
+	bool postfix=false;			// A boolean that tells whether a post increment or post decrement operator is present in an expression or not
 
 	int yylex(void);
 	void yyerror(char *);
@@ -69,7 +69,10 @@ primary_expression: IDENTIFIER	{ value_s* v = st.find_id( $<E->var>1 );
 									;
 
 postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
-									| postfix_expression '[' expression ']' {	Expr* tempvar = newTemp(temp_var_no++);
+/* Calculate the byte offset for the array element based on the array datatype size. Concatenate the array name with the temporary variable created while
+ * calculating the offset, enclosing the offset in []. Print the generated three address code
+*/
+									| postfix_expression '[' expression ']' {	Expr* tempvar = newTemp(temp_var_no++);		// A function present in 'icghelper.cpp'
 																														tempvar->type = $<E->type>3;
 																														Expr* temp = $<E>1;
 																														Expr* constant;
@@ -77,17 +80,21 @@ postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
 																															constant = newTemp("4");
 																														else if(temp->type == Char)
 																															constant = newTemp("1");
-																														tempvar->gen("*", $<E>3, constant);
-																														temp->set_array($<E>1,tempvar);
-
-																														/*temp->gen($<E>1, $<E>3, "4");*/
+																														tempvar->gen("*", $<E>3, constant);			// A function present in 'icghelper.cpp'
+																														temp->set_array($<E>1,tempvar);					// A function present in 'icghelper.cpp'
 																														$<E>$ = temp;
 																													}
+/*
+ *	Function call without any arguments.
+*/
 									| postfix_expression '(' ')' {	Expr* temp=newTemp(temp_var_no++);
 																									temp->type = $<E->type>1;
-																									temp->call($<E>1, 0);
+																									temp->call($<E>1, 0);															// A function present in 'icghelper.cpp'
 																									$<E>$ = temp;
 																								}
+/*
+ *	Function call with one or more arguments. The number of arguments passed is counted in the rule for 'argument_expression_list'
+*/
 									| postfix_expression '(' {param_no = 0;} argument_expression_list ')' {	Expr* temp=newTemp(temp_var_no++);
 																																					temp->type = $<E->type>1;
 																																					temp->call($<E>1, param_no);
@@ -104,14 +111,15 @@ postfix_expression: primary_expression	{ $<E>$ = $<E>1; }
 																								postfix_id = $<E>$;
 																								postfix_operator = INC_OP;
 																								postfix = true;
-																								}
+																							}
 									| postfix_expression DEC_OP {	$<E>$ = $<E>1;
 																								postfix_id = $<E>$;
 																								postfix_operator = DEC_OP;
 																								postfix = true;
-																								}
+																							}
 									;
 
+// Includes action for counting the number of arguments passed to a function
 argument_expression_list: assignment_expression {	$<E>$ = $<E>1;
 																									Expr* temp = $<E>$;
 																									temp->param();
@@ -124,6 +132,10 @@ argument_expression_list: assignment_expression {	$<E>$ = $<E>1;
 																																							}
 												;
 
+/*
+ *	Pre-increment operator: Creates a temporary variable for storing the incremented or decremented value and then assigns the variable to be modified to
+ * the temporary variable
+*/
 unary_expression: postfix_expression  { $<E>$ = $<E>1; }
 								| INC_OP unary_expression {		Expr* constant = newTemp("1");
 																							Expr* tempvar = newTemp(temp_var_no++);
@@ -372,8 +384,7 @@ datatype: VOID 	{dtype = Void;}
 
 declarator: IDENTIFIER		{	$<E>$ = $<E>1;
 														$<E->type>$ = dtype;
-														/*printf("[Type(%s)=%d]", $<E->var>$,$<E->type>$);*/
-														value_s* v = make_value(VAR,dtype,NULL);
+														value_s* v = make_value(VAR,dtype,NULL);		// A function present in 'hashtable.h'
 														if( st.save_id( $<E->var>1 , v ) == 0)
 														{
 															yyerror("Variable already declared!");
@@ -384,8 +395,8 @@ declarator: IDENTIFIER		{	$<E>$ = $<E>1;
 					| declarator '[' conditional_expression ']'
 					| declarator '[' ']'
 					| '(' declarator ')'
-					| declarator '(' parameter_type_list ')' { value_s* v = make_value(FUNC,dtype,NULL);
-																 										 st.update_id($<E->var>1, v);
+					| declarator '(' parameter_type_list ')' { value_s* v = make_value(FUNC,dtype,NULL);		// A function present in 'hashtable.h'
+																 										 st.update_id($<E->var>1, v);									// A function present in 'symbol_table.cpp'
 																										 $<E>$ = $<E>1;
 																										 printf("func begin %s\n", $<E->var>$);
 																									 }
@@ -437,6 +448,7 @@ compound_statement: start_scope '{' '}' { st.close_scope(); }
 									| start_scope '{' statement_list '}'	{ st.close_scope(); }
 									;
 
+// An artificially created production that starts a new scope when curly braces are encountered
 start_scope	:		{ st.new_scope(); }
 						;
 
@@ -453,6 +465,10 @@ expression_statement: ';'
 										| expression ';'
 										;
 
+/*	BRANCH STATEMENTS
+	*	At the beginning of a branch statement, print a goto to a label that is printed at the end of the branch condition. A stack called 'label_s' is used to
+	* store the labels to take of nested branch and looping statements.
+*/
 selection_statement	: if_expression statement	{ //printf("%s",$<E->var>2);
 																								printf("L%d:\n",label_s.top());
 																								label_s.pop();
@@ -467,11 +483,13 @@ selection_statement	: if_expression statement	{ //printf("%s",$<E->var>2);
 																																} %prec ELSE
 										;
 
+// An artificially created rule that combines the " IF '(' expression ')' " statements of the if and if-else blocks
 if_expression : IF '(' expression ')' { label_s.push(temp_label_no);
 																				printf("ifFalse %s goto L%d\n",$<E->var>3,temp_label_no++);
 																		 	}
 							;
 
+//LOOP STATEMENTS: Similar to the BRANCH STATEMENTS, uses a stack to print 'goto's and labels
 iteration_statement	: while_expression statement { //printf("%s",$<E->var>2);
 																									 printf("L%d:\n",label_s.top());
 																									 label_s.pop();
@@ -483,6 +501,7 @@ iteration_statement	: while_expression statement { //printf("%s",$<E->var>2);
 																																		} ';'
 										;
 
+// An artificially created rule that prints the goto and does a push onto the stack once the expression following a while is parsed.
 while_expression:	WHILE '(' expression ')' { label_s.push(temp_label_no);
 																						printf("ifFalse %s goto L%d\n",$<E->var>3,temp_label_no++);
 																					 }
@@ -500,9 +519,6 @@ translation_unit: external_declaration
 external_declaration: function_definition {printf("func end\n\n");}
 										| declaration
 										;
-
-/*function_begin: {printf("func begin %s\n", func_name);}
-							;*/
 
 function_definition	: datatype declarator declaration_list compound_statement	{$<E>$ = $<E>2;}
 										| datatype declarator compound_statement									{$<E>$ = $<E>2;}
